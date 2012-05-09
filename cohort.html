@@ -1,0 +1,355 @@
+<html>
+    <head>
+        <title>Cohort Report</title>
+        <style type="text/css">
+            body {
+                font-family: verdana;
+            }
+            .normalcell {
+                border: 1px solid #ccc;
+            }
+            .header {
+                font-size: 24px;
+            }
+            .heading {
+                border: 1px solid #ccc;
+                font-weight: bold;
+                font-size: 18px;
+            }
+            .num {
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <table id="report" width="100%" cellspacing="0" cellpadding="5">
+            <tr>
+                <th colspan="4" class="normalcell header">
+                    <span id="qtr">{quarter}</span> Cohort Report
+                </th>
+            </tr>
+            <tr>
+                <th>
+                    &nbsp;
+                </th>
+                <td id="site" class="normalcell header">
+                    {site}
+                </td>
+                <td class="heading">
+                    Newly Registered in Quarter 
+                </td>
+                <td class="heading" colspan="2">
+                    Cumulative Ever Registered
+                </td>
+            </tr>
+            <tr>
+                <th>
+                    &nbsp;
+                </th>
+                <td class="heading">
+                    Patient Registration Details
+                </td>
+                <th class="normalcell">
+                    &nbsp; 
+                </th>
+                <th class="normalcell" colspan="2">
+                    &nbsp;
+                </th>
+            </tr>
+            <tr>
+                <td>
+                    &nbsp;
+                </td>
+                <td class="normalcell">
+                    &nbsp;
+                </td>
+                <td class="normalcell">
+                    &nbsp;
+                </td>
+                <td class="normalcell" colspan="2">
+                    &nbsp;
+                </td>
+            </tr>
+        </table>
+
+        <script type="text/javascript">
+            <!--
+            
+            // [
+            //   0:   position label (col #0),
+            //   1:   label col 1 (col #1),
+            //   2:   column count,
+            //   3:   for 2 columns cases, second column label: heading type (col #2),
+            //   4:   for regular columns, col 2 label (col #2),
+            //   5:   col 3 label (col #3),
+            //   6:   col 4 label/value (col #4),
+            //   7:   rowspan,
+            //   8:   field id for col #2,
+            //   9:   ajaxUrl link for col #2,
+            //   10:  field id for col #3,
+            //   11:  ajaxUrl link for col #3,
+            //   12:  field id for col #4,
+            //   13:  ajaxUrl link for col #4
+            // ]
+            var fields = [
+                [6, "Total registered", 3,,,,,,"new_total_reg", "http://localhost/cgi-bin/cohort?field=new_total_reg", 
+                    "cum_total_reg", "http://localhost/cgi-bin/cohort?field=cum_total_reg"],
+                ["&nbsp;", "&nbsp;", 3],
+                [7, "FT: Patients initiated on ART first time", 3,,,,,,"new_ft", "http://localhost/cgi-bin/cohort?field=new_ft",
+                    "cum_ft", "http://localhost/cgi-bin/cohort?field=cum_ft"],
+                [8, "Re: Patients re-initiated on ART", 3,,,,,,"new_re", "http://localhost/cgi-bin/cohort?field=new_re",
+                    "cum_re", "http://localhost/cgi-bin/cohort?field=cum_re"],
+                [9, "TI: Patients transfered in on ART", 3,,,,,,"new_ti", "http://localhost/cgi-bin/cohort?field=new_ti",
+                    "cum_ti", "http://localhost/cgi-bin/cohort?field=cum_ti"],
+                ["&nbsp;", "&nbsp;", 3],
+                [10, "Males (all ages)", 3,,,,,,"new_males", "http://localhost/cgi-bin/cohort?field=new_males",
+                    "cum_males", "http://localhost/cgi-bin/cohort?field=cum_males"],
+                [11, "Non-pregnant Females (all ages)", 3,,,,,,"new_non_preg", "http://localhost/cgi-bin/cohort?field=new_non_preg",
+                    "cum_non_preg", "http://localhost/cgi-bin/cohort?field=cum_non_preg"],
+                [12, "Pregnant Females (all ages)", 3,,,,,,"new_preg_all_age", "http://localhost/cgi-bin/cohort?field=new_preg_all_age",
+                    "cum_preg_all_age", "http://localhost/cgi-bin/cohort?field=cum_preg_all_age"],
+                ["&nbsp;", "&nbsp;", 3],
+                [13, "A: Infants (0<24 months at ART initiation)", 3,,,,,,"new_a", "http://localhost/cgi-bin/cohort?field=new_a",
+                    "cum_a", "http://localhost/cgi-bin/cohort?field=cum_a"],
+                [14, "B: Children (24 mths -14 yrs at ART initiation)", 3,,,,,,"new_b", "http://localhost/cgi-bin/cohort?field=new_b",
+                    "cum_b", "http://localhost/cgi-bin/cohort?field=cum_b"],
+                [15, "C: Adults (15 years or older at ART initiation)", 3,,,,,,"new_c", "http://localhost/cgi-bin/cohort?field=new_c",
+                    "cum_c", "http://localhost/cgi-bin/cohort?field=cum_c"],
+                ["&nbsp;", "Unknown age", 3,,,,,,"new_unk_age", "http://localhost/cgi-bin/cohort?field=new_unk_age",
+                    "cum_unk_age", "http://localhost/cgi-bin/cohort?field=cum_unk_age"],
+                ["&nbsp;", "Reason for starting ART", 3,,,,,,"new_reas_art", "http://localhost/cgi-bin/cohort?field=new_reas_art",
+                    "cum_reas_art", "http://localhost/cgi-bin/cohort?field=cum_reas_art"],
+                [16, "Presumed severe HIV disease in infants", 3,,,,,,"new_pres_hiv", "http://localhost/cgi-bin/cohort?field=new_pres_hiv",
+                    "cum_pres_hiv", "http://localhost/cgi-bin/cohort?field=cum_pres_hiv"],
+                [17, "Confirmed HIV infection in infants (PCR)", 3,,,,,,"new_conf_hiv", "http://localhost/cgi-bin/cohort?field=new_conf_hiv",
+                    "cum_conf_hiv", "http://localhost/cgi-bin/cohort?field=cum_conf_hiv"],
+                [18, "WHO stage 1 or 2, CD4 below threshold", 3,,,,,,"new_who_1_2", "http://localhost/cgi-bin/cohort?field=new_who_1_2",
+                    "cum_who_1_2", "http://localhost/cgi-bin/cohort?field=cum_who_1_2"],
+                [19, "WHO stage 2, total lymphocytes <1,200/mm<sup>3</sup>", 3,,,,,,"new_who_2", "http://localhost/cgi-bin/cohort?field=new_who_2",
+                    "cum_who_2", "http://localhost/cgi-bin/cohort?field=cum_who_2"],
+                [52, "Children 12-23 mths", 3,,,,,,"new_children", "http://localhost/cgi-bin/cohort?field=new_children",
+                    "cum_children", "http://localhost/cgi-bin/cohort?field=cum_children"],
+                [53, "Breastfeeding mothers", 3,,,,,,"new_breastfeed", "http://localhost/cgi-bin/cohort?field=new_breastfeed",
+                    "cum_breastfeed", "http://localhost/cgi-bin/cohort?field=cum_breastfeed"],
+                [54, "Pregnant women", 3,,,,,,"new_preg", "http://localhost/cgi-bin/cohort?field=new_preg",
+                    "cum_preg", "http://localhost/cgi-bin/cohort?field=cum_preg"],
+                [20, "WHO stage 3", 3,,,,,,"new_who_3", "http://localhost/cgi-bin/cohort?field=new_who_3",
+                    "cum_who_3", "http://localhost/cgi-bin/cohort?field=cum_who_3"],
+                [21, "WHO stage 4", 3,,,,,,"new_who_4", "http://localhost/cgi-bin/cohort?field=new_who_4",
+                    "cum_who_4", "http://localhost/cgi-bin/cohort?field=cum_who_4"],
+                [22, "Unknown/other reason outside guidelines", 3,,,,,,"new_other_reason", "http://localhost/cgi-bin/cohort?field=new_other_reason",
+                    "cum_other_reason", "http://localhost/cgi-bin/cohort?field=cum_other_reason"],
+                ["&nbsp;", "Stage defining conditions at ART initiation", 3],
+                [23, "No TB", 3,,,,,,"new_no_tb", "http://localhost/cgi-bin/cohort?field=new_no_tb",
+                    "cum_no_tb", "http://localhost/cgi-bin/cohort?field=cum_no_tb"],
+                [24, "TB within the last 2 years", 3,,,,,,"new_tb_w2yrs", "http://localhost/cgi-bin/cohort?field=new_tb_w2yrs",
+                    "cum_tb_w2yrs", "http://localhost/cgi-bin/cohort?field=cum_tb_w2yrs"],
+                [25, "Current episode of TB", 3,,,,,,"new_current_tb", "http://localhost/cgi-bin/cohort?field=new_current_tb",
+                    "cum_current_tb", "http://localhost/cgi-bin/cohort?field=cum_current_tb"],
+                [26, "Kaposis Sarcoma", 3,,,,,,"new_ks", "http://localhost/cgi-bin/cohort?field=new_ks",
+                    "cum_ks", "http://localhost/cgi-bin/cohort?field=cum_ks"],
+                ["&nbsp;", "Primary outcomes as of the end of the quarter evaluated (only cumulative)", 2, 
+                    "Cumulative ever registered"],
+                [27, "Total alive and on ART", 2,,,,,,"total_on_art", "http://localhost/cgi-bin/cohort?field=total_on_art"],
+                ["&nbsp;", "&nbsp;", 2],
+                [28, "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Died within the 1st month after ART initiation", 2,,,,,,"died_1st_month", 
+                    "http://localhost/cgi-bin/cohort?field=died_1st_month"],
+                [29, "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Died within the 2nd month after ART initiation", 2,,,,,,
+                    "died_2nd_month", "http://localhost/cgi-bin/cohort?field=died_2nd_month"],
+                [30, "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Died within the 3rd month after ART initiation", 2,,,,,,
+                    "died_3rd_month", "http://localhost/cgi-bin/cohort?field=died_3rd_month"],
+                [31, "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Died after the end of the 3rd month after ART initiation", 2,,,,,,
+                    "died_after_3rd_month", "http://localhost/cgi-bin/cohort?field=died_after_3rd_month"],
+                [32, "Died total", 2,,,,,,"died_total", "http://localhost/cgi-bin/cohort?field=died_total"],
+                [33, "Defaulted (more than 2 months overdue after expected to have run out of ARVs)", 2,,,,,,
+                    "defaulted", "http://localhost/cgi-bin/cohort?field=defaulted"],
+                [34, "Stopped taking ARVs (clinician or patient own decision, last known alive)", 2,,,,,,"stopped",
+                    "http://localhost/cgi-bin/cohort?field=stopped"],
+                [35, "Transfered out", 2,,,,,,"transfered", "http://localhost/cgi-bin/cohort?field=transfered"],
+                ["&nbsp;", "Unknown outcome", 2,,,,,,"unknown_outcome", "http://localhost/cgi-bin/cohort?field=unknown_outcome"],
+                ["&nbsp;", "Secondary outcomes of those alive on ART as of last visit before end of quarter", 1, "&nbsp;"],
+                [38, "ARV regimens", 4, null, "1A (D4T+3TC+NVP)", "&nbsp;", "&nbsp;", 2,,,,,"n1a", "http://localhost/cgi-bin/cohort?field=n1a"],
+                ["&nbsp;", "&nbsp;", 4, null, "1P (D4T+3TC+NVP)", "&nbsp;", "&nbsp;", 0,,,,,"n1p", "http://localhost/cgi-bin/cohort?field=n1p"],
+                [38, "&nbsp;", 4, null, "2A (AZT+3TC+NVP)", "&nbsp;", "&nbsp;", 2,,,,,"n2a", "http://localhost/cgi-bin/cohort?field=n2a"],
+                ["&nbsp;", "&nbsp;", 4, null, "2P (AZT+3TC+NVP)", "&nbsp;", "&nbsp;", 0,,,,, "n2p", "http://localhost/cgi-bin/cohort?field=n2p"],
+                [38, "&nbsp;", 4, null, "3A (D4T+3TC+EFV)", "&nbsp;", "&nbsp;", 2,,,,, "n3a", "http://localhost/cgi-bin/cohort?field=n3a"],
+                ["&nbsp;", "&nbsp;", 4, null, "3P (D4T+3TC+EFV)", "&nbsp;", "&nbsp;", 0,,,,, "n3p", "http://localhost/cgi-bin/cohort?field=n3p"],
+                [38, "&nbsp;", 4, null, "4A (AZT+3TC+EFV)", "&nbsp;", "&nbsp;", 2,,,,, "n4a", "http://localhost/cgi-bin/cohort?field=n4a"],
+                ["&nbsp;", "&nbsp;", 4, null, "4P (AZT+3TC+EFV)", "&nbsp;", "&nbsp;", 0,,,,, "n4p", "http://localhost/cgi-bin/cohort?field=n4p"],
+                [38, "&nbsp;", 4, null, "5A (TDF+3TC+EFV)", "&nbsp;", "&nbsp;", 1,,,,, "n5a", "http://localhost/cgi-bin/cohort?field=n5a"],
+                [38, "&nbsp;", 4, null, "6A (TDF+3TC+NVP)", "&nbsp;", "&nbsp;", 1,,,,, "n6a", "http://localhost/cgi-bin/cohort?field=n6a"],
+                [38, "&nbsp;", 4, null, "7A (TDF+3TC+LPV/r)", "&nbsp;", "&nbsp;", 1,,,,, "n7a", "http://localhost/cgi-bin/cohort?field=n7a"],
+                [38, "&nbsp;", 4, null, "8A (AZT+3TC+LPV/r)", "&nbsp;", "&nbsp;", 1,,,,, "n8a", "http://localhost/cgi-bin/cohort?field=n8a"],
+                [38, "&nbsp;", 4, null, "9P (ABC+3TC+LPV/r)", "&nbsp;", "&nbsp;", 1,,,,, "n9p", "http://localhost/cgi-bin/cohort?field=n9p"],
+                [44, "&nbsp;", 4, null, "Non-standard", "(Patients on any other regimens)", "&nbsp;", 1,,,,, "non_std", 
+                    "http://localhost/cgi-bin/cohort?field=non_std"],
+                ["&nbsp;", "Current TB status, any form of TB", 1, "&nbsp;"],
+                [48, "&nbsp;", 3, null, "TB not suspected",,,,,,"tb_no_suspect",
+                    "http://localhost/cgi-bin/cohort?field=tb_no_suspect"],
+                [49, "&nbsp;", 3, null, "TB suspected",,,,,,"tb_suspected", "http://localhost/cgi-bin/cohort?field=tb_suspected"],
+                [50, "&nbsp;", 3, null, "TB confirmed, not yet/currently not on TB treatment",,,,,,
+                    "tb_confirm_not_treat", "http://localhost/cgi-bin/cohort?field=tb_confirm_not_treat"],
+                [51, "&nbsp;", 3, null, "TB confirmed, on TB treatment",,,,,,"tb_confirmed", 
+                    "http://localhost/cgi-bin/cohort?field=tb_confirmed"],
+                ["&nbsp;", "&nbsp;", 3, null, "Unknown TB status",,,,,,"unknown_tb", "http://localhost/cgi-bin/cohort?field=unknown_tb"],
+                ["&nbsp;", "&nbsp;", 3, null, "&nbsp;"]
+            ];
+            
+            function __$(id){
+                return document.getElementById(id);
+            }
+            
+            function createTable(){                
+                for(var i = 0; i < fields.length; i++){
+                    var row = document.createElement("tr");                    
+                        
+                    __$("report").getElementsByTagName("tbody")[0].appendChild(row);
+                                               
+                    var cell0 = document.createElement("td");
+                    cell0.innerHTML = fields[i][0];
+                    cell0.style.textAlign = "right";
+                    cell0.rowSpan = (fields[i][7] != "undefined" && fields[i][7] != 0 ? fields[i][7] : 1);
+                        
+                    if(typeof(fields[i][7]) != "undefined" && fields[i][7] != 0){ 
+                        row.appendChild(cell0);                    
+                    } else if(typeof(fields[i][7]) == "undefined"){
+                        row.appendChild(cell0);                    
+                    } 
+                    
+                    var cell1 = document.createElement("td");
+                    cell1.innerHTML = fields[i][1];
+                    cell1.className = (typeof(fields[i][3]) != "undefined" && fields[i][3] != null ? 
+                        "heading" : "normalcell");                    
+                    cell1.colSpan = (fields[i][2] == 1 ? 4 : (fields[i][2] == 2 ? 2 : 1));
+                    cell1.rowSpan = (fields[i][7] != "undefined" && fields[i][7] != 0 ? fields[i][7] : 1);
+                    
+                    if(typeof(fields[i][7]) != "undefined" && fields[i][7] != 0){ 
+                        row.appendChild(cell1);                    
+                    } else if(typeof(fields[i][7]) == "undefined"){
+                        row.appendChild(cell1);                    
+                    } 
+                    
+                    if(fields[i][2] == 1){
+                        continue;
+                    }
+                    
+                    var cell2 = document.createElement("td");
+                    cell2.innerHTML = (fields[i][2] == 2 ? (typeof(fields[i][3]) != "undefined" && fields[i][3] != null ? 
+                        fields[i][3] : "&nbsp;") : (typeof(fields[i][4]) != "undefined" ? fields[i][4] : "&nbsp;"));
+                    
+                    cell2.className = (typeof(fields[i][3]) != "undefined" && fields[i][3] != null ? 
+                        "heading" : "normalcell");
+                    cell2.colSpan = (fields[i][2] == 2 ? 2 : 1);
+                    
+                    if(typeof(fields[i][8]) != "undefined"){
+                        cell2.id = fields[i][8];
+                        cell2.className = "num normalcell";
+                    }
+                    
+                    row.appendChild(cell2);
+                    
+                    if(fields[i][2] == 2){
+                        continue;
+                    }
+                    
+                    var cell3 = document.createElement("td");
+                    cell3.innerHTML = (typeof(fields[i][5]) != "undefined" ? fields[i][5] : "&nbsp;");
+                    cell3.className = "normalcell";
+                    cell3.colSpan = (fields[i][2] == 3 ? 2 : 1);
+                    
+                    if(typeof(fields[i][10]) != "undefined"){
+                        cell3.id = fields[i][10];
+                        cell3.className = "num normalcell";
+                    }
+                    
+                    row.appendChild(cell3);
+                    
+                    if(fields[i][2] == 3){
+                        continue;
+                    }
+                    
+                    var cell4 = document.createElement("td");
+                    cell4.innerHTML = (typeof(fields[i][6]) != "undefined" ? fields[i][6] : "&nbsp;");
+                    cell4.className = "normalcell";
+                    
+                    if(typeof(fields[i][12]) != "undefined"){
+                        cell4.id = fields[i][12];
+                        cell4.className = "num normalcell";
+                    }
+                    
+                    row.appendChild(cell4);
+                    
+                }
+            }
+            
+            
+            function ajaxRequest(aElement, aUrl) {
+                var httpRequest = new XMLHttpRequest();
+                httpRequest.onreadystatechange = function() {
+                    handleResult(aElement, httpRequest);
+                };
+                try {
+                    httpRequest.open('GET', aUrl, true);
+                    httpRequest.send(null);
+                } catch(e){
+                }
+            }
+
+            function handleResult(element, aXMLHttpRequest) {
+                if (!aXMLHttpRequest) return;
+
+                if (!element) return;
+
+                if (aXMLHttpRequest.readyState == 4 && aXMLHttpRequest.status == 200) {
+                    var result = aXMLHttpRequest.responseText;                
+        
+                    if(__$(element)){
+                        __$(element).innerHTML = result; 
+                    }
+                }
+            }
+            
+            function loadFields(){
+                ajaxRequest("site", "http://localhost/cgi-bin/cohort?field=current_site");
+                
+                var start_date = null, end_date = null;
+                
+                var path = window.location.href.match(/\?(.+)$/);
+
+                var start = path[1].match(/start_date=\d{4}-\d{2}-\d{2}/);
+
+                var end = path[1].match(/end_date=\d{4}-\d{2}-\d{2}/);
+                
+                if(start != null){
+                    start_date = start[0].split("=")[1];
+                }
+                
+                if(end != null){
+                    end_date = end[0].split("=")[1];
+                }
+                
+                ajaxRequest("qtr", "http://localhost/cgi-bin/cohort?field=quarter&start_date=" + 
+                    start_date + "&end_date=" + end_date);
+                
+                for(var i = 0; i < fields.length; i++){
+                    if(typeof(fields[i][8]) != "undefined"){
+                        ajaxRequest(fields[i][8], fields[i][9] + "&start_date=" + 
+                    start_date + "&end_date=" + end_date);
+                    }
+                    if(typeof(fields[i][10]) != "undefined"){
+                        ajaxRequest(fields[i][10], fields[i][11] + "&start_date=" + 
+                    start_date + "&end_date=" + end_date);
+                    }
+                    if(typeof(fields[i][12]) != "undefined"){
+                        ajaxRequest(fields[i][12], fields[i][13] + "&start_date=" + 
+                    start_date + "&end_date=" + end_date);
+                    }
+                }
+            }
+            
+            createTable();
+            loadFields();
+            //-->
+        </script>
+    </body>
+</html>
