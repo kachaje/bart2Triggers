@@ -15,6 +15,11 @@ BEGIN
      UPDATE patient_report SET art_start_date = @encounter_date, age_initiation = @age WHERE patient_id = new.patient_id;
   END IF;                        
 
+  SET @least_encounter_date = (SELECT DATE(COALESCE(MIN(encounter_datetime),NOW())) FROM encounter WHERE patient_id = new.patient_id);
+  IF @encounter_date <= @least_encounter_date THEN
+     UPDATE patient_report SET registration_date = @encounter_date WHERE patient_id = new.patient_id;
+  END IF;                        
+
 END$$
 
 DELIMITER ;

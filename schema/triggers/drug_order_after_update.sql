@@ -11,6 +11,7 @@ BEGIN
      SET @expiry = (SELECT DATE_ADD(@auto_expiry, INTERVAL (COALESCE(new.quantity, 0)/COALESCE(new.equivalent_daily_dose,1)) DAY));
 
      UPDATE patient_report SET expiry_date_for_last_arvs = @expiry WHERE patient_id = (SELECT patient_id FROM orders WHERE order_id = new.order_id);
+     INSERT INTO patient_report_details (patient_id, expiry_date_for_last_arvs) VALUES ((SELECT patient_id FROM orders WHERE order_id = new.order_id), expiry_date_for_last_arvs);
   END IF;
                         
 END$$

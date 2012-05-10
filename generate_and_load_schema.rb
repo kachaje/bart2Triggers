@@ -26,6 +26,9 @@ exception_tables = ["person", "person_address", "person_attribute", "person_name
 
 tables = tables - exception_tables
 
+`mysql --user=#{dest_user} --password=#{dest_pass} -e DROP DATABASE #{dest_db};`
+`mysql --user=#{dest_user} --password=#{dest_pass} -e CREATE DATABASE #{dest_db};`
+
 command = "mysqldump --user=#{user} --password=#{pass} #{db} "
 
 tables.each{|table|
@@ -46,6 +49,9 @@ print "# loading schema/schema.sql file\n"
 print "# loading schema/patient_report.sql file\n"
 `mysql --host=#{dest_host} --user=#{dest_user} --password=#{dest_pass} #{dest_db} < schema/patient_report.sql`
 
+print "# loading schema/patient_report_details.sql file\n"
+`mysql --host=#{dest_host} --user=#{dest_user} --password=#{dest_pass} #{dest_db} < schema/patient_report_details.sql`
+
 print "# loading schema/defaults.sql file\n"
 `mysql --host=#{dest_host} --user=#{dest_user} --password=#{dest_pass} #{dest_db} < schema/defaults.sql`
 
@@ -65,79 +71,131 @@ people.each_hash do |person|
     # Person table and associated fields
     print "# importing person with id #{person["person_id"]}\n"
       
-    p = dest_con.query("INSERT INTO person SELECT * FROM `#{db}`.`person` " + 
-        "WHERE `#{db}`.`person`.`person_id` = #{person["person_id"]}")
+    begin
+      p = dest_con.query("INSERT INTO person SELECT * FROM `#{db}`.`person` " + 
+          "WHERE `#{db}`.`person`.`person_id` = #{person["person_id"]}")   
+    rescue Mysql::Error => e
+      puts "?? Error #{e.errno}: #{e.error}"
+    end
     
     print "# importing person_address with id #{person["person_id"]}\n"
       
-    p = dest_con.query("INSERT INTO person_address SELECT * FROM `#{db}`.`person_address` " + 
-        "WHERE `#{db}`.`person_address`.`person_id` = #{person["person_id"]}")
+    begin
+      p = dest_con.query("INSERT INTO person_address SELECT * FROM `#{db}`.`person_address` " + 
+          "WHERE `#{db}`.`person_address`.`person_id` = #{person["person_id"]}")    
+    rescue Mysql::Error => e
+      puts "?? Error #{e.errno}: #{e.error}"
+    end
     
     print "# importing person_attribute with id #{person["person_id"]}\n"
       
-    p = dest_con.query("INSERT INTO person_attribute SELECT * FROM `#{db}`.`person_attribute` " + 
-        "WHERE `#{db}`.`person_attribute`.`person_id` = #{person["person_id"]}")
+    begin
+      p = dest_con.query("INSERT INTO person_attribute SELECT * FROM `#{db}`.`person_attribute` " + 
+          "WHERE `#{db}`.`person_attribute`.`person_id` = #{person["person_id"]}")   
+    rescue Mysql::Error => e
+      puts "?? Error #{e.errno}: #{e.error}"
+    end
     
     print "# importing person_name with id #{person["person_id"]}\n"
       
-    p = dest_con.query("INSERT INTO person_name SELECT * FROM `#{db}`.`person_name` " + 
-        "WHERE `#{db}`.`person_name`.`person_id` = #{person["person_id"]}")
+    begin
+      p = dest_con.query("INSERT INTO person_name SELECT * FROM `#{db}`.`person_name` " + 
+          "WHERE `#{db}`.`person_name`.`person_id` = #{person["person_id"]}")    
+    rescue Mysql::Error => e
+      puts "?? Error #{e.errno}: #{e.error}"
+    end
     
     print "# importing person_name_code with id #{person["person_id"]}\n"
     
-    p = dest_con.query("INSERT INTO person_name_code SELECT * FROM `#{db}`.`person_name_code` " + 
-        "WHERE `#{db}`.`person_name_code`.`person_name_id` IN (SELECT person_name_id FROM " + 
-        "`#{db}`.`person_name` WHERE `#{db}`.`person_name`.`person_id` = #{person["person_id"]})")
+    begin
+      p = dest_con.query("INSERT INTO person_name_code SELECT * FROM `#{db}`.`person_name_code` " + 
+          "WHERE `#{db}`.`person_name_code`.`person_name_id` IN (SELECT person_name_id FROM " + 
+          "`#{db}`.`person_name` WHERE `#{db}`.`person_name`.`person_id` = #{person["person_id"]})")    
+    rescue Mysql::Error => e
+      puts "?? Error #{e.errno}: #{e.error}"
+    end
     
     # Patient and associated fields
     print "# importing patient with id #{person["person_id"]}\n"
       
-    p = dest_con.query("INSERT INTO patient SELECT * FROM `#{db}`.`patient` " + 
-        "WHERE `#{db}`.`patient`.`patient_id` = #{person["person_id"]}")
+    begin
+      p = dest_con.query("INSERT INTO patient SELECT * FROM `#{db}`.`patient` " + 
+          "WHERE `#{db}`.`patient`.`patient_id` = #{person["person_id"]}")   
+    rescue Mysql::Error => e
+      puts "?? Error #{e.errno}: #{e.error}"
+    end
     
     print "# importing patient_identifier with id #{person["person_id"]}\n"
       
-    p = dest_con.query("INSERT INTO patient_identifier SELECT * FROM `#{db}`.`patient_identifier` " + 
-        "WHERE `#{db}`.`patient_identifier`.`patient_id` = #{person["person_id"]}")
+    begin
+      p = dest_con.query("INSERT INTO patient_identifier SELECT * FROM `#{db}`.`patient_identifier` " + 
+          "WHERE `#{db}`.`patient_identifier`.`patient_id` = #{person["person_id"]}")    
+    rescue Mysql::Error => e
+      puts "?? Error #{e.errno}: #{e.error}"
+    end
     
     print "# importing patient_program with id #{person["person_id"]}\n"
       
-    p = dest_con.query("INSERT INTO patient_program SELECT * FROM `#{db}`.`patient_program` " + 
-        "WHERE `#{db}`.`patient_program`.`patient_id` = #{person["person_id"]}")
+    begin
+      p = dest_con.query("INSERT INTO patient_program SELECT * FROM `#{db}`.`patient_program` " + 
+          "WHERE `#{db}`.`patient_program`.`patient_id` = #{person["person_id"]}")    
+    rescue Mysql::Error => e
+      puts "?? Error #{e.errno}: #{e.error}"
+    end
     
     print "# importing patient_state with id #{person["person_id"]}\n"
       
-    p = dest_con.query("INSERT INTO patient_state SELECT * FROM `#{db}`.`patient_state` " + 
-        "WHERE `#{db}`.`patient_state`.`patient_program_id` IN (SELECT patient_program_id " + 
-        "FROM `#{db}`.`patient_program` WHERE `#{db}`.`patient_program`.`patient_id` = #{person["person_id"]})")
-
+    begin
+      p = dest_con.query("INSERT INTO patient_state SELECT * FROM `#{db}`.`patient_state` " + 
+          "WHERE `#{db}`.`patient_state`.`patient_program_id` IN (SELECT patient_program_id " + 
+          "FROM `#{db}`.`patient_program` WHERE `#{db}`.`patient_program`.`patient_id` = #{person["person_id"]})")    
+    rescue Mysql::Error => e
+      puts "?? Error #{e.errno}: #{e.error}"
+    end
+    
     # Encounter table     
     print "# importing encounter with patient id #{person["person_id"]}\n"
       
-    p = dest_con.query("INSERT INTO encounter SELECT * FROM `#{db}`.`encounter` " + 
-        "WHERE `#{db}`.`encounter`.`patient_id` = #{person["person_id"]}")  
-       
+    begin
+      p = dest_con.query("INSERT INTO encounter SELECT * FROM `#{db}`.`encounter` " + 
+          "WHERE `#{db}`.`encounter`.`patient_id` = #{person["person_id"]}")     
+    rescue Mysql::Error => e
+      puts "?? Error #{e.errno}: #{e.error}"
+    end
+    
     # Observations - simple mapping assumed at this stage
     print "# importing observations with patient id #{person["person_id"]}\n"
       
-    p = dest_con.query("SET @@FOREIGN_KEY_CHECKS=0")  
-    p = dest_con.query("INSERT INTO obs SELECT * FROM `#{db}`.`obs` " + 
-        "WHERE `#{db}`.`obs`.`person_id` = #{person["person_id"]}") 
-
+    begin
+      p = dest_con.query("SET @@FOREIGN_KEY_CHECKS=0")  
+      p = dest_con.query("INSERT INTO obs SELECT * FROM `#{db}`.`obs` " + 
+          "WHERE `#{db}`.`obs`.`person_id` = #{person["person_id"]}")    
+    rescue Mysql::Error => e
+      puts "?? Error #{e.errno}: #{e.error}"
+    end
+    
     # Orders - simple mapping assumed at this stage
     print "# importing orders with patient id #{person["person_id"]}\n"
       
-    p = dest_con.query("INSERT INTO orders SELECT * FROM `#{db}`.`orders` " + 
-        "WHERE `#{db}`.`orders`.`encounter_id` IN (SELECT encounter_id FROM " + 
-        "`#{db}`.`encounter` WHERE `#{db}`.`encounter`.`patient_id` = #{person["person_id"]})")
-        
+    begin
+      p = dest_con.query("INSERT INTO orders SELECT * FROM `#{db}`.`orders` " + 
+          "WHERE `#{db}`.`orders`.`encounter_id` IN (SELECT encounter_id FROM " + 
+          "`#{db}`.`encounter` WHERE `#{db}`.`encounter`.`patient_id` = #{person["person_id"]})")    
+    rescue Mysql::Error => e
+      puts "?? Error #{e.errno}: #{e.error}"
+    end
+     
     print "# importing drug_orders with patient id #{person["person_id"]}\n"
       
-    p = dest_con.query("INSERT INTO drug_order SELECT * FROM `#{db}`.`drug_order` " + 
-        "WHERE `#{db}`.`drug_order`.`order_id` IN (SELECT order_id FROM `#{db}`.`orders` " + 
-        "WHERE encounter_id IN (SELECT encounter_id FROM " + 
-        "`#{db}`.`encounter` WHERE `#{db}`.`encounter`.`patient_id` = #{person["person_id"]}))")
-        
+    begin
+      p = dest_con.query("INSERT INTO drug_order SELECT * FROM `#{db}`.`drug_order` " + 
+          "WHERE `#{db}`.`drug_order`.`order_id` IN (SELECT order_id FROM `#{db}`.`orders` " + 
+          "WHERE encounter_id IN (SELECT encounter_id FROM " + 
+          "`#{db}`.`encounter` WHERE `#{db}`.`encounter`.`patient_id` = #{person["person_id"]}))")    
+    rescue Mysql::Error => e
+      puts "?? Error #{e.errno}: #{e.error}"
+    end
+     
     p = dest_con.query("SET @@FOREIGN_KEY_CHECKS=1")
   }
   t.join

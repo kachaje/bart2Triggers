@@ -9,7 +9,7 @@ BEGIN
   SET @birth_date = (SELECT birthdate FROM person WHERE person_id=@patient_id);
   SET @gender = (SELECT gender FROM person WHERE person_id=@patient_id);
   
-  INSERT INTO patient_report (patient_id, registration_date, birth_date, gender) VALUES(@patient_id, @registration_date, @birth_date, @gender);
+  INSERT INTO patient_report (patient_id, birth_date, gender) VALUES(@patient_id, @birth_date, @gender);
                         
 END$$
 

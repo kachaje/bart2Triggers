@@ -1,0 +1,119 @@
+<html>
+    <head>
+        <title>Cohort Report Viewer</title>
+        <style type="text/css">
+            body {
+                font-family: verdana;
+            }
+            .normalcell {
+                border: 1px solid #ccc;
+            }
+            .header {
+                font-size: 24px;
+            }
+            .heading {
+                border: 1px solid #ccc;
+                font-weight: bold;
+                font-size: 18px;
+            }
+            .num {
+                text-align: center;
+            }
+            select {                
+                font-size: 24px;
+                padding: 10px;
+            }
+            button {                
+                font-size: 24px;
+                padding: 10px;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <body>
+    <center>
+        <table cellspacing="0" cellpadding="10" width="100%">
+            <tr style="background-color: #eee;">
+                <td class="header">
+                    Year
+                    <select id="selYear">
+                    </select>
+                </td>
+                <td class="header" style="text-align: center;">
+                    Quarter
+                    <select id="selQtr">
+                        <option value="1" onclick="loadPage()">Q 1</option>
+                        <option value="2" onclick="loadPage()">Q 2</option>
+                        <option value="3" onclick="loadPage()">Q 3</option>
+                        <option value="4" onclick="loadPage()">Q 4</option>
+                    </select>
+                </td>
+                <td style="text-align: right;">
+                    <button onclick="loadPage()">
+                        Generate Report
+                    </button>
+                </td>
+            </tr>
+            <tr style="background-color: #eee;">
+                <td colspan="3">
+                    <iframe id="ireport" style="width: 100%; height: 600px; border: 1px solid #ccc; background-color: #fff;"></iframe>
+                </td>
+            </tr>
+            <tr style="background-color: #eee;">
+                <td colspan="3">
+                    &nbsp;
+                </td>
+            </tr>
+        </table>
+    </center>
+    <script type="text/javascript">
+        <!--
+        
+        function __$(id){
+            return document.getElementById(id);
+        }
+        
+        function loadYears(){
+            for(var i = (new Date().getFullYear()); i >= 2000 ; i--){
+                var opt = document.createElement("option");
+                opt.innerHTML = i;
+                opt.onclick = function(){
+                    loadPage();
+                }
+                
+                __$("selYear").appendChild(opt);
+            }
+        }
+        
+        function loadPage(){
+            var enddate = "";
+            var startdate = "";
+            
+            switch(__$("selQtr").value){
+                case "1":
+                    enddate = "-03-31"; 
+                    startdate = "-01-01"; 
+                    break;
+                case "2":
+                    enddate = "-06-30"; 
+                    startdate = "-04-01"; 
+                    break;
+                case "3":
+                    enddate = "-09-30"; 
+                    startdate = "-07-01"; 
+                    break;
+                case "4":
+                    enddate = "-12-31"; 
+                    startdate = "-10-01"; 
+                    break;
+            }
+            
+            __$("ireport").src = "cohort.html?start_date=" + __$("selYear").value + 
+                startdate + "&end_date=" + __$("selYear").value + enddate;
+        }
+        
+        loadYears();
+        //-->
+    </script>
+</body>
+</html>

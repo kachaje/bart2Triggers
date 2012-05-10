@@ -362,8 +362,7 @@ def new_conf_hiv(start_date=Time.now, end_date=Time.now, section=nil)
   rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
       ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND " + 
       "COALESCE(art_start_date,'') != '' AND (COALESCE(reason_for_art_eligibility,'') = " + 
-      "'HIV DNA POLYMERASE CHAIN REACTION' OR COALESCE(reason_for_art_eligibility,'') = " + 
-      "'HIV infected') LIMIT 0,1")
+      "'HIV DNA POLYMERASE CHAIN REACTION') LIMIT 0,1")
   
   row = rs.fetch_hash
   
@@ -375,8 +374,7 @@ def cum_conf_hiv(start_date=Time.now, end_date=Time.now, section=nil)
   
   rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
       "COALESCE(art_start_date,'') != '' AND (COALESCE(reason_for_art_eligibility,'') = " + 
-      "'HIV DNA POLYMERASE CHAIN REACTION' OR COALESCE(reason_for_art_eligibility,'') = " + 
-      "'HIV infected') LIMIT 0,1")
+      "'HIV DNA POLYMERASE CHAIN REACTION') LIMIT 0,1")
   
   row = rs.fetch_hash
   
@@ -436,11 +434,28 @@ def cum_who_2(start_date=Time.now, end_date=Time.now, section=nil)
 end
 
 def new_children(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND (COALESCE(reason_for_art_eligibility,'') = " + 
+      "'HIV infected') LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def cum_children(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND (COALESCE(reason_for_art_eligibility,'') = " + 
+      "'HIV infected') LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def new_breastfeed(start_date=Time.now, end_date=Time.now, section=nil)
