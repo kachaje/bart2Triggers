@@ -79,8 +79,8 @@ end
 def new_total_reg(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(art_start_date) " + 
-      ">= '#{start_date}' AND DATE(art_start_date) <= '#{end_date}' LIMIT 0,1")
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND COALESCE(art_start_date,'') != '' LIMIT 0,1")
   
   row = rs.fetch_hash
   
@@ -90,7 +90,8 @@ end
 def cum_total_reg(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(art_start_date) <= '#{end_date}' LIMIT 0,1")
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      "<= '#{end_date}' AND COALESCE(art_start_date,'') != '' LIMIT 0,1")
   
   row = rs.fetch_hash
   
@@ -100,8 +101,9 @@ end
 def new_ft(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(art_start_date) " + 
-      ">= '#{start_date}' AND DATE(art_start_date) <= '#{end_date}' LIMIT 0,1")
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND DATE(registration_date) " + 
+      "= DATE(art_start_date) AND COALESCE(art_start_date,'') != '' LIMIT 0,1")
   
   row = rs.fetch_hash
   
@@ -111,8 +113,8 @@ end
 def cum_ft(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(art_start_date) " + 
-      ">= '#{start_date}' AND DATE(art_start_date) <= '#{end_date}' LIMIT 0,1")
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      "<= '#{end_date}' AND DATE(registration_date) = DATE(art_start_date) AND COALESCE(art_start_date,'') != '' LIMIT 0,1")
   
   row = rs.fetch_hash
   
@@ -120,115 +122,317 @@ def cum_ft(start_date=Time.now, end_date=Time.now, section=nil)
 end
 
 def new_re(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND COALESCE(art_start_date,'') != '' " + 
+      " AND COALESCE(patient_did_not_take_arvs_in_last_two_months,'') != '' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def cum_re(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date)" + 
+      " <= '#{end_date}' AND COALESCE(art_start_date,'') != '' " + 
+      " AND COALESCE(patient_did_not_take_arvs_in_last_two_months,'') != '' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def new_ti(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND DATE(registration_date) " + 
+      "> DATE(art_start_date) AND COALESCE(art_start_date,'') != '' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def cum_ti(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      "<= '#{end_date}' AND DATE(registration_date) > DATE(art_start_date) AND COALESCE(art_start_date,'') != '' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def new_males(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND gender = 'M' " + 
+      "AND COALESCE(art_start_date,'') != '' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def cum_males(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      "<= '#{end_date}' AND gender = 'M' AND COALESCE(art_start_date,'') != '' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def new_non_preg(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND gender = 'F' " + 
+      "AND COALESCE(patient_pregnant_date, '') = '' AND COALESCE(art_start_date,'') != '' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def cum_non_preg(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      "<= '#{end_date}' AND gender = 'F' " + 
+      "AND COALESCE(patient_pregnant_date, '') = '' AND COALESCE(art_start_date,'') != '' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def new_preg_all_age(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND gender = 'F' " + 
+      "AND COALESCE(patient_pregnant_date, '') != '' AND COALESCE(art_start_date,'') != '' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def cum_preg_all_age(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      "<= '#{end_date}' AND gender = 'F' " + 
+      "AND COALESCE(patient_pregnant_date, '') != '' AND COALESCE(art_start_date,'') != '' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def new_a(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND age_initiation < 2 LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def cum_a(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      "<= '#{end_date}' AND COALESCE(art_start_date,'') != '' AND age_initiation < 2 LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def new_b(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND age_initiation >= 2 AND age_initiation <= 14 LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def cum_b(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      "<= '#{end_date}' AND COALESCE(art_start_date,'') != '' AND age_initiation >= 2 AND age_initiation <= 14 LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def new_c(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND age_initiation > 14 LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def cum_c(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      "<= '#{end_date}' AND COALESCE(art_start_date,'') != '' AND age_initiation > 14 LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def new_unk_age(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND COALESCE(age_initiation,0) = 0 LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def cum_unk_age(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
-end
-
-def new_reas_art(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
-end
-
-def cum_reas_art(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      "<= '#{end_date}' AND COALESCE(art_start_date,'') != '' AND COALESCE(age_initiation,0) = 0 LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def new_pres_hiv(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND COALESCE(reason_for_art_eligibility,'') = " + 
+      "'PRESUMED SEVERE HIV' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def cum_pres_hiv(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND COALESCE(reason_for_art_eligibility,'') = " + 
+      "'PRESUMED SEVERE HIV' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def new_conf_hiv(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND (COALESCE(reason_for_art_eligibility,'') = " + 
+      "'HIV DNA POLYMERASE CHAIN REACTION' OR COALESCE(reason_for_art_eligibility,'') = " + 
+      "'HIV infected') LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def cum_conf_hiv(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND (COALESCE(reason_for_art_eligibility,'') = " + 
+      "'HIV DNA POLYMERASE CHAIN REACTION' OR COALESCE(reason_for_art_eligibility,'') = " + 
+      "'HIV infected') LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def new_who_1_2(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND (COALESCE(reason_for_art_eligibility,'') = " + 
+      "'CD4 COUNT LESS THAN OR EQUAL TO 350' OR COALESCE(reason_for_art_eligibility,'') = " + 
+      "'CD4 COUNT LESS THAN OR EQUAL TO 750') LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def cum_who_1_2(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND (COALESCE(reason_for_art_eligibility,'') = " + 
+      "'CD4 COUNT LESS THAN OR EQUAL TO 350' OR COALESCE(reason_for_art_eligibility,'') = " + 
+      "'CD4 COUNT LESS THAN OR EQUAL TO 750') LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def new_who_2(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND COALESCE(reason_for_art_eligibility,'') = " + 
+      "'LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def cum_who_2(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND COALESCE(reason_for_art_eligibility,'') = " + 
+      "'LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def new_children(start_date=Time.now, end_date=Time.now, section=nil)
@@ -240,191 +444,614 @@ def cum_children(start_date=Time.now, end_date=Time.now, section=nil)
 end
 
 def new_breastfeed(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND COALESCE(reason_for_art_eligibility,'') = " + 
+      "'Breastfeeding' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def cum_breastfeed(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND COALESCE(reason_for_art_eligibility,'') = " + 
+      "'Breastfeeding' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def new_preg(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND COALESCE(reason_for_art_eligibility,'') = " + 
+      "'PATIENT PREGNANT' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def cum_preg(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND COALESCE(reason_for_art_eligibility,'') = " + 
+      "'PATIENT PREGNANT' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def new_who_3(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND COALESCE(reason_for_art_eligibility,'') LIKE " + 
+      "'WHO STAGE III%' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def cum_who_3(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND COALESCE(reason_for_art_eligibility,'')  LIKE " + 
+      "'WHO STAGE III%' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def new_who_4(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND COALESCE(reason_for_art_eligibility,'') LIKE " + 
+      "'WHO STAGE IV%' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def cum_who_4(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND COALESCE(reason_for_art_eligibility,'')  LIKE " + 
+      "'WHO STAGE IV%' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def new_other_reason(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND NOT (COALESCE(reason_for_art_eligibility,'') = " + 
+      "'PRESUMED SEVERE HIV' OR (COALESCE(reason_for_art_eligibility,'') = " + 
+      "'HIV DNA POLYMERASE CHAIN REACTION' OR COALESCE(reason_for_art_eligibility,'') = " + 
+      "'HIV infected') OR (COALESCE(reason_for_art_eligibility,'') = " + 
+      "'CD4 COUNT LESS THAN OR EQUAL TO 350' OR COALESCE(reason_for_art_eligibility,'') = " + 
+      "'CD4 COUNT LESS THAN OR EQUAL TO 750') OR COALESCE(reason_for_art_eligibility,'') = " + 
+      "'LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2' OR COALESCE(reason_for_art_eligibility,'') = " + 
+      "'Breastfeeding' OR COALESCE(reason_for_art_eligibility,'') = " + 
+      "'PATIENT PREGNANT' OR COALESCE(reason_for_art_eligibility,'') LIKE " + 
+      "'WHO STAGE III%' OR COALESCE(reason_for_art_eligibility,'') LIKE " + 
+      "'WHO STAGE IV%') LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def cum_other_reason(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND NOT (COALESCE(reason_for_art_eligibility,'') = " + 
+      "'PRESUMED SEVERE HIV' OR (COALESCE(reason_for_art_eligibility,'') = " + 
+      "'HIV DNA POLYMERASE CHAIN REACTION' OR COALESCE(reason_for_art_eligibility,'') = " + 
+      "'HIV infected') OR (COALESCE(reason_for_art_eligibility,'') = " + 
+      "'CD4 COUNT LESS THAN OR EQUAL TO 350' OR COALESCE(reason_for_art_eligibility,'') = " + 
+      "'CD4 COUNT LESS THAN OR EQUAL TO 750') OR COALESCE(reason_for_art_eligibility,'') = " + 
+      "'LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2' OR COALESCE(reason_for_art_eligibility,'') = " + 
+      "'Breastfeeding' OR COALESCE(reason_for_art_eligibility,'') = " + 
+      "'PATIENT PREGNANT' OR COALESCE(reason_for_art_eligibility,'') LIKE " + 
+      "'WHO STAGE III%' OR COALESCE(reason_for_art_eligibility,'') LIKE " + 
+      "'WHO STAGE IV%') LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def new_no_tb(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND COALESCE(current_episode_of_tb,'') = '' " + 
+      "AND COALESCE(tb_within_the_last_2_years,'') = '' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def cum_no_tb(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND COALESCE(current_episode_of_tb,'') = '' " + 
+      "AND COALESCE(tb_within_the_last_2_years,'') = '' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def new_tb_w2yrs(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND COALESCE(current_episode_of_tb,'') = '' " + 
+      "AND COALESCE(tb_within_the_last_2_years,'') != '' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def cum_tb_w2yrs(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND COALESCE(current_episode_of_tb,'') = '' " + 
+      "AND COALESCE(tb_within_the_last_2_years,'') != '' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def new_current_tb(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND COALESCE(current_episode_of_tb,'') != '' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def cum_current_tb(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND COALESCE(current_episode_of_tb,'') != '' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def new_ks(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) " + 
+      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND COALESCE(karposis_sarcoma,'') != '' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def cum_ks(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND COALESCE(karposis_sarcoma,'') != '' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def total_on_art(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND (CASE WHEN COALESCE(expiry_date_for_last_arvs,'') != '' " + 
+      "AND COALESCE(last_visit_date,'') != '' THEN DATEDIFF(last_visit_date, expiry_date_for_last_arvs) " + 
+      "ELSE 0 END) >= 60 AND latest_state = 'On antiretrovirals' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def died_1st_month(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND (CASE WHEN COALESCE(art_start_date,'') != '' " + 
+      "AND COALESCE(latest_state_date,'') != '' THEN DATEDIFF(latest_state_date, art_start_date) " + 
+      "ELSE 31 END) <= 30 AND latest_state = 'Patient died' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def died_2nd_month(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND (CASE WHEN COALESCE(art_start_date,'') != '' " + 
+      "AND COALESCE(latest_state_date,'') != '' THEN DATEDIFF(latest_state_date, art_start_date) " + 
+      "ELSE 31 END) > 30 AND (CASE WHEN COALESCE(art_start_date,'') != '' " + 
+      "AND COALESCE(latest_state_date,'') != '' THEN DATEDIFF(latest_state_date, art_start_date) " + 
+      "ELSE 61 END) <= 60 AND latest_state = 'Patient died' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def died_3rd_month(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND (CASE WHEN COALESCE(art_start_date,'') != '' " + 
+      "AND COALESCE(latest_state_date,'') != '' THEN DATEDIFF(latest_state_date, art_start_date) " + 
+      "ELSE 31 END) > 60 AND (CASE WHEN COALESCE(art_start_date,'') != '' " + 
+      "AND COALESCE(latest_state_date,'') != '' THEN DATEDIFF(latest_state_date, art_start_date) " + 
+      "ELSE 91 END) <= 90 AND latest_state = 'Patient died' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def died_after_3rd_month(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND (CASE WHEN COALESCE(art_start_date,'') != '' " + 
+      "AND COALESCE(latest_state_date,'') != '' THEN DATEDIFF(latest_state_date, art_start_date) " + 
+      "ELSE 0 END) > 90 AND latest_state = 'Patient died' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def died_total(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND latest_state = 'Patient died' AND DATE(latest_state_date) < '#{end_date}' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def defaulted(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND (CASE WHEN COALESCE(expiry_date_for_last_arvs,'') != '' " + 
+      "AND COALESCE(last_visit_date,'') != '' THEN DATEDIFF(last_visit_date, expiry_date_for_last_arvs) " + 
+      "ELSE 0 END) >= 60 LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def stopped(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND (CASE WHEN COALESCE(arv_drugs_stopped,'') != '' " + 
+      "THEN DATE(arv_drugs_stopped) < '#{end_date}' " + 
+      "ELSE 0 END) LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def transfered(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND DATE(latest_state_date) < '#{end_date}' " + 
+      "AND latest_state = 'Patient transfered out' LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def unknown_outcome(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND NOT ((DATE(latest_state_date) < '#{end_date}' " + 
+      "AND latest_state = 'Patient transfered out') OR (CASE WHEN COALESCE(arv_drugs_stopped,'') != '' " + 
+      "THEN DATE(arv_drugs_stopped) < '#{end_date}' " + 
+      "ELSE 0 END) OR (CASE WHEN COALESCE(expiry_date_for_last_arvs,'') != '' " + 
+      "AND COALESCE(last_visit_date,'') != '' THEN DATEDIFF(last_visit_date, expiry_date_for_last_arvs) " + 
+      "ELSE 0 END) >= 60 OR (latest_state = 'Patient died' AND DATE(latest_state_date) < '#{end_date}')) LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def n1a(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND DATE(latest_regimen_date) < '#{end_date}' " + 
+      "AND latest_regimen = '1A' AND NOT (latest_state = 'Patient died' AND DATE(latest_state_date) < '#{end_date}') LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def n1p(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND DATE(latest_regimen_date) < '#{end_date}' " + 
+      "AND latest_regimen = '1P' AND NOT (latest_state = 'Patient died' AND DATE(latest_state_date) < '#{end_date}') LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def n2a(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND DATE(latest_regimen_date) < '#{end_date}' " + 
+      "AND latest_regimen = '2A' AND NOT (latest_state = 'Patient died' AND DATE(latest_state_date) < '#{end_date}') LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def n2p(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND DATE(latest_regimen_date) < '#{end_date}' " + 
+      "AND latest_regimen = '2P' AND NOT (latest_state = 'Patient died' AND DATE(latest_state_date) < '#{end_date}') LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def n3a(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND DATE(latest_regimen_date) < '#{end_date}' " + 
+      "AND latest_regimen = '3A' AND NOT (latest_state = 'Patient died' AND DATE(latest_state_date) < '#{end_date}') LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def n3p(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND DATE(latest_regimen_date) < '#{end_date}' " + 
+      "AND latest_regimen = '3P' AND NOT (latest_state = 'Patient died' AND DATE(latest_state_date) < '#{end_date}') LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def n4a(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND DATE(latest_regimen_date) < '#{end_date}' " + 
+      "AND latest_regimen = '4A' AND NOT (latest_state = 'Patient died' AND DATE(latest_state_date) < '#{end_date}') LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def n4p(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND DATE(latest_regimen_date) < '#{end_date}' " + 
+      "AND latest_regimen = '4P' AND NOT (latest_state = 'Patient died' AND DATE(latest_state_date) < '#{end_date}') LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def n5a(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND DATE(latest_regimen_date) < '#{end_date}' " + 
+      "AND latest_regimen = '5A' AND NOT (latest_state = 'Patient died' AND DATE(latest_state_date) < '#{end_date}') LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def n6a(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND DATE(latest_regimen_date) < '#{end_date}' " + 
+      "AND latest_regimen = '6A' AND NOT (latest_state = 'Patient died' AND DATE(latest_state_date) < '#{end_date}') LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def n7a(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND DATE(latest_regimen_date) < '#{end_date}' " + 
+      "AND latest_regimen = '7A' AND NOT (latest_state = 'Patient died' AND DATE(latest_state_date) < '#{end_date}') LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def n8a(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND DATE(latest_regimen_date) < '#{end_date}' " + 
+      "AND latest_regimen = '8A' AND NOT (latest_state = 'Patient died' AND DATE(latest_state_date) < '#{end_date}') LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def n9p(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND DATE(latest_regimen_date) < '#{end_date}' " + 
+      "AND latest_regimen = '9P' AND NOT (latest_state = 'Patient died' AND DATE(latest_state_date) < '#{end_date}') LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def non_std(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND DATE(latest_regimen_date) < '#{end_date}' " + 
+      "AND NOT (latest_regimen = '1A' OR latest_regimen = '1P' OR latest_regimen = '2A' " + 
+      "OR latest_regimen = '2P' OR latest_regimen = '3A' OR latest_regimen = '3P' OR " + 
+      "latest_regimen = '4A' OR latest_regimen = '4P' OR latest_regimen = '5A' OR latest_regimen = '6A' " + 
+      " OR latest_regimen = '7A' OR latest_regimen = '8A' OR latest_regimen = '9P') " + 
+      " AND NOT (latest_state = 'Patient died' AND DATE(latest_state_date) < '#{end_date}') LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def tb_no_suspect(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND DATE(tb_status_date) < '#{end_date}' " + 
+      "AND tb_status = 'TB NOT suspected' AND NOT (latest_state = 'Patient died' AND DATE(latest_state_date) " + 
+      "< '#{end_date}') LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def tb_suspected(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND DATE(tb_status_date) < '#{end_date}' " + 
+      "AND tb_status = 'TB suspected' AND NOT (latest_state = 'Patient died' AND DATE(latest_state_date) " + 
+      "< '#{end_date}') LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def tb_confirm_not_treat(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND DATE(tb_status_date) < '#{end_date}' " + 
+      "AND tb_status = 'Confirmed TB not on treatment' AND NOT (latest_state = 'Patient died' AND DATE(latest_state_date) " + 
+      "< '#{end_date}') LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def tb_confirmed(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND DATE(tb_status_date) < '#{end_date}' " + 
+      "AND tb_status = 'Confirmed TB on treatment' AND NOT (latest_state = 'Patient died' AND DATE(latest_state_date) " + 
+      "< '#{end_date}') LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 def unknown_tb(start_date=Time.now, end_date=Time.now, section=nil)
-	reply(section)
+	con = connect("development")
+  
+  rs = con.query("SELECT COUNT(*) fields FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(art_start_date,'') != '' AND DATE(tb_status_date) < '#{end_date}' " + 
+      "AND NOT (tb_status = 'Confirmed TB on treatment' OR tb_status = 'Confirmed TB not on treatment' " + 
+      "OR tb_status = 'TB suspected' OR tb_status = 'TB NOT suspected') AND NOT (latest_state = 'Patient died' " + 
+      "AND DATE(latest_state_date) < '#{end_date}') LIMIT 0,1")
+  
+  row = rs.fetch_hash
+  
+  reply(row["fields"])
 end
 
 # End cohort queries
@@ -487,10 +1114,6 @@ if cgi.params["field"]
     new_unk_age(start_date, end_date, cgi.params["field"][0])
   when "cum_unk_age"
     cum_unk_age(start_date, end_date, cgi.params["field"][0])
-  when "new_reas_art"
-    new_reas_art(start_date, end_date, cgi.params["field"][0])
-  when "cum_reas_art"
-    cum_reas_art(start_date, end_date, cgi.params["field"][0])
   when "new_pres_hiv"
     new_pres_hiv(start_date, end_date, cgi.params["field"][0])
   when "cum_pres_hiv"

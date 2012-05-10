@@ -15,7 +15,7 @@ BEGIN
 
   /* reason_for_art_eligibility */
   IF new.concept_id = (SELECT concept_id FROM concept_name WHERE name = "Reason for ART eligibility") THEN		  	  
-		  UPDATE patient_report SET reason_for_art_eligibility = (SELECT name FROM concept_name WHERE concept_id = new.value_coded LIMIT 0,1) WHERE patient_id = new.person_id; 
+		  UPDATE patient_report SET reason_for_art_eligibility = (SELECT CASE COALESCE(new.value_coded_name_id,'') WHEN '' THEN (SELECT name FROM concept_name WHERE concept_id = new.value_coded LIMIT 0,1) ELSE (SELECT name FROM concept_name WHERE concept_name_id = new.value_coded_name_id LIMIT 0,1) END) WHERE patient_id = new.person_id; 
   END IF;  
 
   /* tb */                  
@@ -32,10 +32,9 @@ BEGIN
 		  UPDATE patient_report SET karposis_sarcoma = new.obs_datetime WHERE patient_id = new.person_id;
   END IF; 
 
-  /* ART REGIMENS */
-  IF (new.concept_id = (SELECT concept_id FROM concept_name WHERE name = "Regimen Category" LIMIT 0,1) OR new.concept_id = (SELECT concept_id FROM concept_name WHERE name = "ARV regimens received abstracted construct")) AND (SELECT name FROM encounter_type WHERE encounter_type_id = (SELECT encounter_type FROM encounter WHERE encounter_id = new.encounter_id)) = "DISPENSING" THEN
-	SET @regimen = (SELECT CASE WHEN COALESCE(new.value_text, "") <> "" THEN new.value_text ELSE "OTHER" END);
-	UPDATE patient_report SET latest_regimen = @regimen, latest_regimen_date = new.obs_datetime WHERE patient_id = new.person_id;
+  /* ART REGIMENS */  
+  IF (new.concept_id = (SELECT concept_id FROM concept_name WHERE name = "Regimen Category" LIMIT 0,1) AND (SELECT name FROM encounter_type WHERE encounter_type_id = (SELECT encounter_type FROM encounter WHERE encounter_id = new.encounter_id)) = "DISPENSING") THEN
+	UPDATE patient_report SET latest_regimen = new.value_text, latest_regimen_date = new.obs_datetime WHERE patient_id = new.person_id;
   END IF;
 
   /* SIDE EFFECTS */
@@ -55,6 +54,11 @@ BEGIN
   IF (new.concept_id = (SELECT concept_id FROM concept_name WHERE name = "TB status" LIMIT 0,1)) AND (SELECT name FROM encounter_type WHERE encounter_type_id = (SELECT encounter_type FROM encounter WHERE encounter_id = new.encounter_id)) = "HIV CLINIC CONSULTATION" THEN
         SET @status = (SELECT name FROM concept_name WHERE concept_id = new.value_coded LIMIT 0,1);
 	UPDATE patient_report SET tb_status = @status, tb_status_date = new.obs_datetime WHERE patient_id = new.person_id;
+  END IF;
+
+  /* Re-initiation */
+  IF (new.concept_id = (SELECT concept_id FROM concept_name WHERE name = "Has the patient taken ART in the last two months" LIMIT 0,1)) AND (SELECT name FROM encounter_type WHERE encounter_type_id = (SELECT encounter_type FROM encounter WHERE encounter_id = new.encounter_id)) = "HIV CLINIC REGISTRATION" AND (new.value_coded IN (SELECT concept_id FROM concept_name WHERE name = "NO") OR new.value_text = "NO") THEN
+	UPDATE patient_report SET patient_did_not_take_arvs_in_last_two_months = new.obs_datetime WHERE patient_id = new.person_id;
   END IF;
 
 END$$
