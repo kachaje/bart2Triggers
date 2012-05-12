@@ -509,8 +509,7 @@ end
 def cum_preg(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT DISTINCT patient_id FROM patient_report WHERE DATE(registration_date) " + 
-      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND " + 
+  rs = con.query("SELECT DISTINCT patient_id FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
       "COALESCE(art_start_date,'0000-00-00') != '0000-00-00' AND (COALESCE(reason_for_art_eligibility,'') = " + 
       "'PATIENT PREGNANT')")
   
@@ -594,8 +593,7 @@ end
 def cum_other_reason(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT DISTINCT patient_id FROM patient_report WHERE DATE(registration_date) " + 
-      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND " + 
+  rs = con.query("SELECT DISTINCT patient_id FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
       "COALESCE(art_start_date,'0000-00-00') != '0000-00-00' AND NOT (COALESCE(reason_for_art_eligibility,'') = " + 
       "'PRESUMED SEVERE HIV' OR (COALESCE(reason_for_art_eligibility,'') = " + 
       "'HIV DNA POLYMERASE CHAIN REACTION' OR COALESCE(reason_for_art_eligibility,'') = " + 
@@ -616,31 +614,13 @@ end
 def new_no_tb(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  prs = con.query("SELECT DISTINCT patient_id fields FROM patient_report_details WHERE DATE(registration_date) " + 
-      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(art_start_date,'0000-00-00') != '0000-00-00' AND COALESCE(current_episode_of_tb,'0000-00-00') = '0000-00-00' " + 
-      "AND COALESCE(tb_within_the_last_2_years,'0000-00-00') != '0000-00-00'")
+  rs = con.query("SELECT DISTINCT d.patient_id fields FROM patient_report_details d LEFT OUTER JOIN patient_report p" + 
+      " ON d.patient_id = p.patient_id WHERE DATE(p.registration_date) " + 
+      ">= '#{start_date}' AND DATE(p.registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(p.art_start_date,'0000-00-00') != '0000-00-00' AND COALESCE(d.current_episode_of_tb,'0000-00-00') = '0000-00-00' " + 
+      "AND COALESCE(d.tb_within_the_last_2_years,'0000-00-00') = '0000-00-00'")
   
-  prow = prs.num_rows  
-  
-  crs = con.query("SELECT DISTINCT patient_id fields FROM patient_report_details WHERE DATE(registration_date) " + 
-      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(art_start_date,'0000-00-00') != '0000-00-00' AND COALESCE(current_episode_of_tb,'0000-00-00') != '0000-00-00'")
-  
-  crow = crs.num_rows  
-  
-  krs = con.query("SELECT DISTINCT patient_id fields FROM patient_report_details WHERE DATE(registration_date) " + 
-      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(art_start_date,'0000-00-00') != '0000-00-00' AND COALESCE(karposis_sarcoma,'0000-00-00') != '0000-00-00'")
-  
-  krow = krs.num_rows  
-  
-  rs = con.query("SELECT DISTINCT patient_id fields FROM patient_report_details WHERE DATE(registration_date) " + 
-      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(art_start_date,'0000-00-00') != '0000-00-00' AND COALESCE(current_episode_of_tb,'0000-00-00') = '0000-00-00' " + 
-      "AND COALESCE(tb_within_the_last_2_years,'0000-00-00') = '0000-00-00'")
-  
-  row = rs.num_rows - prow - crow - krow
+  row = rs.num_rows
   
   reply(row)
 end
@@ -648,30 +628,12 @@ end
 def cum_no_tb(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  prs = con.query("SELECT DISTINCT patient_id fields FROM patient_report_details WHERE " + 
-      "DATE(registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(art_start_date,'0000-00-00') != '0000-00-00' AND COALESCE(current_episode_of_tb,'0000-00-00') = '0000-00-00' " + 
-      "AND COALESCE(tb_within_the_last_2_years,'0000-00-00') != '0000-00-00'")
+  rs = con.query("SELECT DISTINCT d.patient_id fields FROM patient_report_details d LEFT OUTER JOIN patient_report p" + 
+      " ON d.patient_id = p.patient_id WHERE DATE(p.registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(p.art_start_date,'0000-00-00') != '0000-00-00' AND COALESCE(d.current_episode_of_tb,'0000-00-00') = '0000-00-00' " + 
+      "AND COALESCE(d.tb_within_the_last_2_years,'0000-00-00') = '0000-00-00'")
   
-  prow = prs.num_rows  
-  
-  crs = con.query("SELECT DISTINCT patient_id fields FROM patient_report_details WHERE " + 
-      "DATE(registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(art_start_date,'0000-00-00') != '0000-00-00' AND COALESCE(current_episode_of_tb,'0000-00-00') != '0000-00-00'")
-  
-  crow = crs.num_rows
-  
-  krs = con.query("SELECT DISTINCT patient_id fields FROM patient_report_details WHERE " + 
-      "DATE(registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(art_start_date,'0000-00-00') != '0000-00-00' AND COALESCE(karposis_sarcoma,'0000-00-00') != '0000-00-00'")
-  
-  krow = krs.num_rows  
-  
-  rs = con.query("SELECT DISTINCT patient_id fields FROM patient_report_details WHERE DATE(registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(art_start_date,'0000-00-00') != '0000-00-00' AND COALESCE(current_episode_of_tb,'0000-00-00') = '0000-00-00' " + 
-      "AND COALESCE(tb_within_the_last_2_years,'0000-00-00') = '0000-00-00'")
-  
-  row = rs.num_rows - prow - crow - krow
+  row = rs.num_rows
   
   reply(row)
 end
@@ -679,10 +641,12 @@ end
 def new_tb_w2yrs(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT DISTINCT patient_id fields FROM patient_report_details WHERE DATE(registration_date) " + 
-      ">= '#{start_date}' AND DATE(registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(art_start_date,'0000-00-00') != '0000-00-00' AND COALESCE(current_episode_of_tb,'0000-00-00') = '0000-00-00' " + 
-      "AND COALESCE(tb_within_the_last_2_years,'0000-00-00') != '0000-00-00'")
+  rs = con.query("SELECT DISTINCT d.patient_id FROM patient_report_details d LEFT OUTER JOIN patient_report p" + 
+      " ON d.patient_id = p.patient_id WHERE DATE(p.registration_date) " + 
+      ">= '#{start_date}' AND DATE(p.registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(p.art_start_date,'0000-00-00') != '0000-00-00' AND COALESCE(d.current_episode_of_tb,'0000-00-00') = '0000-00-00' " + 
+      "AND COALESCE(d.tb_within_the_last_2_years,'0000-00-00') != '0000-00-00' AND " + 
+      "DATE(d.tb_within_the_last_2_years) <= '#{end_date}'")
   
   row = rs.num_rows
   
@@ -692,9 +656,11 @@ end
 def cum_tb_w2yrs(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT DISTINCT patient_id fields FROM patient_report_details WHERE DATE(registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(art_start_date,'0000-00-00') != '0000-00-00' AND COALESCE(current_episode_of_tb,'0000-00-00') = '0000-00-00' " + 
-      "AND COALESCE(tb_within_the_last_2_years,'0000-00-00') != '0000-00-00'")
+  rs = con.query("SELECT DISTINCT d.patient_id FROM patient_report_details d LEFT OUTER JOIN patient_report p" + 
+      " ON d.patient_id = p.patient_id WHERE DATE(p.registration_date) <= '#{end_date}' AND " + 
+      "COALESCE(p.art_start_date,'0000-00-00') != '0000-00-00' AND COALESCE(d.current_episode_of_tb,'0000-00-00') = '0000-00-00' " + 
+      "AND COALESCE(d.tb_within_the_last_2_years,'0000-00-00') != '0000-00-00' AND " + 
+      "DATE(d.tb_within_the_last_2_years) <= '#{end_date}'")
   
   row = rs.num_rows
   

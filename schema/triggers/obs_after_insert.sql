@@ -51,7 +51,7 @@ BEGIN
 	UPDATE patient_report SET tb_within_the_last_2_years = new.obs_datetime WHERE patient_id = new.person_id;
 	
 	     IF  @report_id != "" THEN
-		UPDATE patient_report_details SET current_episode_of_tb = new.obs_datetime WHERE patient_report_details_id = @report_id;
+		UPDATE patient_report_details SET tb_within_the_last_2_years = new.obs_datetime WHERE patient_report_details_id = @report_id;
 	     ELSE
 	     	INSERT INTO patient_report_details (patient_id, art_start_date, age_initiation, registration_date, tb_within_the_last_2_years) VALUES (new.person_id, @art_start_date, @age_initiation, @registration_date, new.obs_datetime);
              END IF;
