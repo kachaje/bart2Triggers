@@ -17,7 +17,7 @@ BEGIN
      UPDATE patient_report SET expiry_date_for_last_arvs = @expiry WHERE patient_id = (SELECT patient_id FROM orders WHERE order_id = new.order_id);
 
      SET @startdate = (SELECT start_date FROM orders WHERE order_id = new.order_id);
-     SET @report_id = (SELECT COALESCE(patient_report_details_id,"") FROM patient_report_details WHERE ((FLOOR((MONTH(latest_state_date) - 1)/3) = FLOOR((MONTH(@startdate) - 1)/3) AND YEAR(latest_state_date) = YEAR(@startdate)) OR (FLOOR((MONTH(latest_regimen_date) - 1)/3) = FLOOR((MONTH(@startdate) - 1)/3) AND YEAR(latest_regimen_date) = YEAR(@startdate)) OR (FLOOR((MONTH(tb_status_date) - 1)/3) = FLOOR((MONTH(@startdate) - 1)/3) AND YEAR(tb_status_date) = YEAR(@startdate))) AND patient_id = (SELECT patient_id FROM orders WHERE order_id = new.order_id));
+     SET @report_id = (SELECT COALESCE(patient_report_details_id,"") FROM patient_report_details WHERE ((FLOOR((MONTH(latest_state_date) - 1)/3) = FLOOR((MONTH(@startdate) - 1)/3) AND YEAR(latest_state_date) = YEAR(@startdate)) OR (FLOOR((MONTH(last_visit_date) - 1)/3) = FLOOR((MONTH(@startdate) - 1)/3) AND YEAR(last_visit_date) = YEAR(@startdate)) OR (FLOOR((MONTH(latest_regimen_date) - 1)/3) = FLOOR((MONTH(@startdate) - 1)/3) AND YEAR(latest_regimen_date) = YEAR(@startdate)) OR (FLOOR((MONTH(tb_status_date) - 1)/3) = FLOOR((MONTH(@startdate) - 1)/3) AND YEAR(tb_status_date) = YEAR(@startdate))) AND patient_id = (SELECT patient_id FROM orders WHERE order_id = new.order_id));
 
      IF  @report_id != "" THEN
         UPDATE patient_report_details SET expiry_date_for_last_arvs = @expiry WHERE patient_report_details_id = @report_id;

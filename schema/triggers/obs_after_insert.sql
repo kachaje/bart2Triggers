@@ -9,7 +9,7 @@ BEGIN
   SET @age_initiation = (SELECT COALESCE(age_initiation,NULL) FROM patient_report WHERE patient_id = new.person_id);
   SET @registration_date = (SELECT COALESCE(registration_date,NULL) FROM patient_report WHERE patient_id = new.person_id);
   SET @startdate = new.obs_datetime;
-  SET @report_id = (SELECT COALESCE(patient_report_details_id,"") FROM patient_report_details WHERE ((FLOOR((MONTH(latest_state_date) - 1)/3) = FLOOR((MONTH(@startdate) - 1)/3) AND YEAR(latest_state_date) = YEAR(@startdate)) OR (FLOOR((MONTH(latest_regimen_date) - 1)/3) = FLOOR((MONTH(@startdate) - 1)/3) AND YEAR(latest_regimen_date) = YEAR(@startdate)) OR (FLOOR((MONTH(tb_status_date) - 1)/3) = FLOOR((MONTH(@startdate) - 1)/3) AND YEAR(tb_status_date) = YEAR(@startdate))) AND patient_id = new.person_id);
+  SET @report_id = (SELECT COALESCE(patient_report_details_id,"") FROM patient_report_details WHERE ((FLOOR((MONTH(latest_state_date) - 1)/3) = FLOOR((MONTH(@startdate) - 1)/3) AND YEAR(latest_state_date) = YEAR(@startdate)) OR (FLOOR((MONTH(last_visit_date) - 1)/3) = FLOOR((MONTH(@startdate) - 1)/3) AND YEAR(last_visit_date) = YEAR(@startdate)) OR (FLOOR((MONTH(latest_regimen_date) - 1)/3) = FLOOR((MONTH(@startdate) - 1)/3) AND YEAR(latest_regimen_date) = YEAR(@startdate)) OR (FLOOR((MONTH(tb_status_date) - 1)/3) = FLOOR((MONTH(@startdate) - 1)/3) AND YEAR(tb_status_date) = YEAR(@startdate))) AND patient_id = new.person_id);
 
   /* patient_pregnant */
   SET @art_start_date = (SELECT art_start_date FROM patient_report WHERE patient_id = new.person_id);
@@ -92,7 +92,12 @@ BEGIN
 
   /* LAST VISIT DATE*/
   UPDATE patient_report SET last_visit_date = new.obs_datetime WHERE patient_id = new.person_id;
-  /* INSERT INTO patient_report_details (patient_id, last_visit_date) VALUES (new.person_id, new.obs_datetime); */
+
+     IF  @report_id != "" THEN
+	UPDATE patient_report_details SET last_visit_date = new.obs_datetime WHERE patient_report_details_id = @report_id;
+     ELSE
+     	INSERT INTO patient_report_details (patient_id, last_visit_date) VALUES (new.person_id, new.obs_datetime);
+     END IF;
 
   /* MISSED DOSES */
   IF (new.concept_id = (SELECT concept_id FROM concept_name WHERE name = "Missed antiretroviral drug construct" LIMIT 0,1)) AND (SELECT name FROM encounter_type WHERE encounter_type_id = (SELECT encounter_type FROM encounter WHERE encounter_id = new.encounter_id)) = "ART ADHERENCE" THEN
