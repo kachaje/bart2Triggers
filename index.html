@@ -4,6 +4,7 @@
         <style type="text/css">
             body {
                 font-family: verdana;
+                -moz-user-select: none;
             }
             .normalcell {
                 border: 1px solid #ccc;
@@ -49,8 +50,11 @@
                     </select>
                 </td>
                 <td style="text-align: right;">
+                    <button onclick="__$('ireport').contentWindow.print()">
+                        Print Report
+                    </button>
                     <button onclick="loadPage()">
-                        Generate Report
+                        Regenerate Report
                     </button>
                 </td>
             </tr>
@@ -112,7 +116,13 @@
                 startdate + "&end_date=" + __$("selYear").value + enddate;
         }
         
+        function resize(){
+            __$("ireport").style.height = ((window.innerHeight - 160) + "px");
+            setTimeout("resize()", 100);
+        }
+        
         loadYears();
+        setTimeout("resize()", 100);
         //-->
     </script>
 </body>

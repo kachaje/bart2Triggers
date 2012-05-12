@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 5.1.62, for debian-linux-gnu (i686)
 --
--- Host: localhost    Database: test
+-- Host: localhost    Database: test_bart
 -- ------------------------------------------------------
 -- Server version	5.1.62-0ubuntu0.11.04.1
 
@@ -47,8 +47,9 @@ CREATE TABLE `patient_report` (
   `last_missed_drugs_date` datetime DEFAULT NULL,
   `tb_status` varchar(64) DEFAULT NULL,
   `tb_status_date` datetime DEFAULT NULL,
+  `patient_did_not_take_arvs_in_last_two_months` datetime DEFAULT NULL,
   PRIMARY KEY (`patient_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -60,4 +61,4 @@ CREATE TABLE `patient_report` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2012-05-08 12:00:07
+-- Dump completed on 2012-05-12 11:10:14

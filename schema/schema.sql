@@ -117,58 +117,60 @@ CREATE TABLE `active_list_type` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `clinic_consultation_encounter`
+-- Temporary table structure for view `clinic_consultation_encounter`
 --
 
 DROP TABLE IF EXISTS `clinic_consultation_encounter`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `clinic_consultation_encounter` (
-  `encounter_id` int(11) DEFAULT NULL,
-  `encounter_type` int(11) DEFAULT NULL,
-  `patient_id` int(11) DEFAULT NULL,
-  `provider_id` int(11) DEFAULT NULL,
-  `location_id` int(11) DEFAULT NULL,
-  `form_id` int(11) DEFAULT NULL,
-  `encounter_datetime` datetime DEFAULT NULL,
-  `creator` int(11) DEFAULT NULL,
-  `date_created` datetime DEFAULT NULL,
-  `voided` smallint(6) DEFAULT NULL,
-  `voided_by` int(11) DEFAULT NULL,
-  `date_voided` datetime DEFAULT NULL,
-  `void_reason` varchar(255) DEFAULT NULL,
-  `uuid` char(38) DEFAULT NULL,
-  `changed_by` int(11) DEFAULT NULL,
-  `date_changed` datetime DEFAULT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
+/*!50001 DROP VIEW IF EXISTS `clinic_consultation_encounter`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `clinic_consultation_encounter` (
+  `encounter_id` int(11),
+  `encounter_type` int(11),
+  `patient_id` int(11),
+  `provider_id` int(11),
+  `location_id` int(11),
+  `form_id` int(11),
+  `encounter_datetime` datetime,
+  `creator` int(11),
+  `date_created` datetime,
+  `voided` smallint(6),
+  `voided_by` int(11),
+  `date_voided` datetime,
+  `void_reason` varchar(255),
+  `uuid` char(38),
+  `changed_by` int(11),
+  `date_changed` datetime
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
 
 --
--- Table structure for table `clinic_registration_encounter`
+-- Temporary table structure for view `clinic_registration_encounter`
 --
 
 DROP TABLE IF EXISTS `clinic_registration_encounter`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `clinic_registration_encounter` (
-  `encounter_id` int(11) DEFAULT NULL,
-  `encounter_type` int(11) DEFAULT NULL,
-  `patient_id` int(11) DEFAULT NULL,
-  `provider_id` int(11) DEFAULT NULL,
-  `location_id` int(11) DEFAULT NULL,
-  `form_id` int(11) DEFAULT NULL,
-  `encounter_datetime` datetime DEFAULT NULL,
-  `creator` int(11) DEFAULT NULL,
-  `date_created` datetime DEFAULT NULL,
-  `voided` smallint(6) DEFAULT NULL,
-  `voided_by` int(11) DEFAULT NULL,
-  `date_voided` datetime DEFAULT NULL,
-  `void_reason` varchar(255) DEFAULT NULL,
-  `uuid` char(38) DEFAULT NULL,
-  `changed_by` int(11) DEFAULT NULL,
-  `date_changed` datetime DEFAULT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
+/*!50001 DROP VIEW IF EXISTS `clinic_registration_encounter`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `clinic_registration_encounter` (
+  `encounter_id` int(11),
+  `encounter_type` int(11),
+  `patient_id` int(11),
+  `provider_id` int(11),
+  `location_id` int(11),
+  `form_id` int(11),
+  `encounter_datetime` datetime,
+  `creator` int(11),
+  `date_created` datetime,
+  `voided` smallint(6),
+  `voided_by` int(11),
+  `date_voided` datetime,
+  `void_reason` varchar(255),
+  `uuid` char(38),
+  `changed_by` int(11),
+  `date_changed` datetime
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
 
 --
 -- Table structure for table `cohort`
@@ -857,19 +859,20 @@ CREATE TABLE `drug_order` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `earliest_start_date`
+-- Temporary table structure for view `earliest_start_date`
 --
 
 DROP TABLE IF EXISTS `earliest_start_date`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `earliest_start_date` (
-  `patient_id` int(11) DEFAULT NULL,
-  `date_enrolled` datetime DEFAULT NULL,
-  `earliest_start_date` date DEFAULT NULL,
-  `death_date` datetime DEFAULT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
+/*!50001 DROP VIEW IF EXISTS `earliest_start_date`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `earliest_start_date` (
+  `patient_id` int(11),
+  `date_enrolled` datetime,
+  `earliest_start_date` date,
+  `death_date` datetime
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
 
 --
 -- Table structure for table `encounter`
@@ -914,7 +917,7 @@ CREATE TABLE `encounter` (
   CONSTRAINT `encounter_provider` FOREIGN KEY (`provider_id`) REFERENCES `person` (`person_id`),
   CONSTRAINT `encounter_type_id` FOREIGN KEY (`encounter_type`) REFERENCES `encounter_type` (`encounter_type_id`),
   CONSTRAINT `user_who_voided_encounter` FOREIGN KEY (`voided_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=510 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=632 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1833,7 +1836,7 @@ CREATE TABLE `obs` (
   CONSTRAINT `obs_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`order_id`),
   CONSTRAINT `person_obs` FOREIGN KEY (`person_id`) REFERENCES `person` (`person_id`) ON UPDATE CASCADE,
   CONSTRAINT `user_who_voided_obs` FOREIGN KEY (`voided_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3839 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=4749 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1941,7 +1944,7 @@ CREATE TABLE `orders` (
   CONSTRAINT `type_of_order` FOREIGN KEY (`order_type_id`) REFERENCES `order_type` (`order_type_id`),
   CONSTRAINT `user_who_discontinued_order` FOREIGN KEY (`discontinued_by`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_voided_order` FOREIGN KEY (`voided_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=25569 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=25592 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1972,7 +1975,7 @@ CREATE TABLE `patient` (
   CONSTRAINT `user_who_changed_pat` FOREIGN KEY (`changed_by`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_created_patient` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_voided_patient` FOREIGN KEY (`voided_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=100 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=114 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2009,7 +2012,7 @@ CREATE TABLE `patient_identifier` (
   CONSTRAINT `identifier_voider` FOREIGN KEY (`voided_by`) REFERENCES `users` (`user_id`),
   CONSTRAINT `identifies_patient` FOREIGN KEY (`patient_id`) REFERENCES `patient` (`patient_id`),
   CONSTRAINT `patient_identifier_ibfk_2` FOREIGN KEY (`location_id`) REFERENCES `location` (`location_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=141 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=169 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2046,6 +2049,47 @@ CREATE TABLE `patient_identifier_type` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Temporary table structure for view `patient_pregnant_obs`
+--
+
+DROP TABLE IF EXISTS `patient_pregnant_obs`;
+/*!50001 DROP VIEW IF EXISTS `patient_pregnant_obs`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `patient_pregnant_obs` (
+  `obs_id` int(11),
+  `person_id` int(11),
+  `concept_id` int(11),
+  `encounter_id` int(11),
+  `order_id` int(11),
+  `obs_datetime` datetime,
+  `location_id` int(11),
+  `obs_group_id` int(11),
+  `accession_number` varchar(255),
+  `value_group_id` int(11),
+  `value_boolean` tinyint(1),
+  `value_coded` int(11),
+  `value_coded_name_id` int(11),
+  `value_drug` int(11),
+  `value_datetime` datetime,
+  `value_numeric` double,
+  `value_modifier` varchar(2),
+  `value_text` text,
+  `date_started` datetime,
+  `date_stopped` datetime,
+  `comments` varchar(255),
+  `creator` int(11),
+  `date_created` datetime,
+  `voided` smallint(6),
+  `voided_by` int(11),
+  `date_voided` datetime,
+  `void_reason` varchar(255),
+  `value_complex` varchar(255),
+  `uuid` char(38)
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
 -- Table structure for table `patient_program`
 --
 
@@ -2080,7 +2124,7 @@ CREATE TABLE `patient_program` (
   CONSTRAINT `program_for_patient` FOREIGN KEY (`program_id`) REFERENCES `program` (`program_id`),
   CONSTRAINT `user_who_changed` FOREIGN KEY (`changed_by`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_voided_patient_program` FOREIGN KEY (`voided_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3952 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=3967 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2117,33 +2161,34 @@ CREATE TABLE `patient_state` (
   CONSTRAINT `patient_state_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `patient_state_voider` FOREIGN KEY (`voided_by`) REFERENCES `users` (`user_id`),
   CONSTRAINT `state_for_patient` FOREIGN KEY (`state`) REFERENCES `program_workflow_state` (`program_workflow_state_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=126 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=157 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `patient_state_on_arvs`
+-- Temporary table structure for view `patient_state_on_arvs`
 --
 
 DROP TABLE IF EXISTS `patient_state_on_arvs`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `patient_state_on_arvs` (
-  `patient_state_id` int(11) DEFAULT NULL,
-  `patient_program_id` int(11) DEFAULT NULL,
-  `state` int(11) DEFAULT NULL,
-  `start_date` date DEFAULT NULL,
-  `end_date` date DEFAULT NULL,
-  `creator` int(11) DEFAULT NULL,
-  `date_created` datetime DEFAULT NULL,
-  `changed_by` int(11) DEFAULT NULL,
-  `date_changed` datetime DEFAULT NULL,
-  `voided` smallint(6) DEFAULT NULL,
-  `voided_by` int(11) DEFAULT NULL,
-  `date_voided` datetime DEFAULT NULL,
-  `void_reason` varchar(255) DEFAULT NULL,
-  `uuid` char(38) DEFAULT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
+/*!50001 DROP VIEW IF EXISTS `patient_state_on_arvs`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `patient_state_on_arvs` (
+  `patient_state_id` int(11),
+  `patient_program_id` int(11),
+  `state` int(11),
+  `start_date` date,
+  `end_date` date,
+  `creator` int(11),
+  `date_created` datetime,
+  `changed_by` int(11),
+  `date_changed` datetime,
+  `voided` smallint(6),
+  `voided_by` int(11),
+  `date_voided` datetime,
+  `void_reason` varchar(255),
+  `uuid` char(38)
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
 
 --
 -- Table structure for table `patientflags_flag`
@@ -2276,7 +2321,7 @@ CREATE TABLE `person` (
   CONSTRAINT `user_who_changed_person` FOREIGN KEY (`changed_by`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_created_person` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_voided_person` FOREIGN KEY (`voided_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=100 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=114 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2319,7 +2364,7 @@ CREATE TABLE `person_address` (
   CONSTRAINT `address_for_person` FOREIGN KEY (`person_id`) REFERENCES `person` (`person_id`) ON UPDATE CASCADE,
   CONSTRAINT `patient_address_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `patient_address_void` FOREIGN KEY (`voided_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=100 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=114 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2355,7 +2400,7 @@ CREATE TABLE `person_attribute` (
   CONSTRAINT `attribute_voider` FOREIGN KEY (`voided_by`) REFERENCES `users` (`user_id`),
   CONSTRAINT `defines_attribute_type` FOREIGN KEY (`person_attribute_type_id`) REFERENCES `person_attribute_type` (`person_attribute_type_id`),
   CONSTRAINT `identifies_person` FOREIGN KEY (`person_id`) REFERENCES `person` (`person_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=499 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=541 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2439,7 +2484,7 @@ CREATE TABLE `person_name` (
   CONSTRAINT `name for person` FOREIGN KEY (`person_id`) REFERENCES `person` (`person_id`) ON UPDATE CASCADE,
   CONSTRAINT `user_who_made_name` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_voided_name` FOREIGN KEY (`voided_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=100 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=114 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2464,7 +2509,7 @@ CREATE TABLE `person_name_code` (
   KEY `family_name_code` (`family_name_code`),
   KEY `given_family_name_code` (`given_name_code`,`family_name_code`),
   CONSTRAINT `code for name` FOREIGN KEY (`person_name_id`) REFERENCES `person_name` (`person_name_id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=47406 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=47420 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2788,44 +2833,45 @@ CREATE TABLE `regimen_drug_order` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `regimen_observation`
+-- Temporary table structure for view `regimen_observation`
 --
 
 DROP TABLE IF EXISTS `regimen_observation`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `regimen_observation` (
-  `obs_id` int(11) DEFAULT NULL,
-  `person_id` int(11) DEFAULT NULL,
-  `concept_id` int(11) DEFAULT NULL,
-  `encounter_id` int(11) DEFAULT NULL,
-  `order_id` int(11) DEFAULT NULL,
-  `obs_datetime` datetime DEFAULT NULL,
-  `location_id` int(11) DEFAULT NULL,
-  `obs_group_id` int(11) DEFAULT NULL,
-  `accession_number` varchar(255) DEFAULT NULL,
-  `value_group_id` int(11) DEFAULT NULL,
-  `value_boolean` tinyint(1) DEFAULT NULL,
-  `value_coded` int(11) DEFAULT NULL,
-  `value_coded_name_id` int(11) DEFAULT NULL,
-  `value_drug` int(11) DEFAULT NULL,
-  `value_datetime` datetime DEFAULT NULL,
-  `value_numeric` double DEFAULT NULL,
-  `value_modifier` varchar(2) DEFAULT NULL,
+/*!50001 DROP VIEW IF EXISTS `regimen_observation`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `regimen_observation` (
+  `obs_id` int(11),
+  `person_id` int(11),
+  `concept_id` int(11),
+  `encounter_id` int(11),
+  `order_id` int(11),
+  `obs_datetime` datetime,
+  `location_id` int(11),
+  `obs_group_id` int(11),
+  `accession_number` varchar(255),
+  `value_group_id` int(11),
+  `value_boolean` tinyint(1),
+  `value_coded` int(11),
+  `value_coded_name_id` int(11),
+  `value_drug` int(11),
+  `value_datetime` datetime,
+  `value_numeric` double,
+  `value_modifier` varchar(2),
   `value_text` text,
-  `date_started` datetime DEFAULT NULL,
-  `date_stopped` datetime DEFAULT NULL,
-  `comments` varchar(255) DEFAULT NULL,
-  `creator` int(11) DEFAULT NULL,
-  `date_created` datetime DEFAULT NULL,
-  `voided` smallint(6) DEFAULT NULL,
-  `voided_by` int(11) DEFAULT NULL,
-  `date_voided` datetime DEFAULT NULL,
-  `void_reason` varchar(255) DEFAULT NULL,
-  `value_complex` varchar(255) DEFAULT NULL,
-  `uuid` char(38) DEFAULT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
+  `date_started` datetime,
+  `date_stopped` datetime,
+  `comments` varchar(255),
+  `creator` int(11),
+  `date_created` datetime,
+  `voided` smallint(6),
+  `voided_by` int(11),
+  `date_voided` datetime,
+  `void_reason` varchar(255),
+  `value_complex` varchar(255),
+  `uuid` char(38)
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
 
 --
 -- Table structure for table `region`
@@ -3218,48 +3264,49 @@ CREATE TABLE `sessions` (
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `sessions_session_id_index` (`session_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=18103 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=18108 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `start_date_observation`
+-- Temporary table structure for view `start_date_observation`
 --
 
 DROP TABLE IF EXISTS `start_date_observation`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `start_date_observation` (
-  `obs_id` int(11) DEFAULT NULL,
-  `person_id` int(11) DEFAULT NULL,
-  `concept_id` int(11) DEFAULT NULL,
-  `encounter_id` int(11) DEFAULT NULL,
-  `order_id` int(11) DEFAULT NULL,
-  `obs_datetime` datetime DEFAULT NULL,
-  `location_id` int(11) DEFAULT NULL,
-  `obs_group_id` int(11) DEFAULT NULL,
-  `accession_number` varchar(255) DEFAULT NULL,
-  `value_group_id` int(11) DEFAULT NULL,
-  `value_boolean` tinyint(1) DEFAULT NULL,
-  `value_coded` int(11) DEFAULT NULL,
-  `value_coded_name_id` int(11) DEFAULT NULL,
-  `value_drug` int(11) DEFAULT NULL,
-  `value_datetime` datetime DEFAULT NULL,
-  `value_numeric` double DEFAULT NULL,
-  `value_modifier` varchar(2) DEFAULT NULL,
+/*!50001 DROP VIEW IF EXISTS `start_date_observation`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `start_date_observation` (
+  `obs_id` int(11),
+  `person_id` int(11),
+  `concept_id` int(11),
+  `encounter_id` int(11),
+  `order_id` int(11),
+  `obs_datetime` datetime,
+  `location_id` int(11),
+  `obs_group_id` int(11),
+  `accession_number` varchar(255),
+  `value_group_id` int(11),
+  `value_boolean` tinyint(1),
+  `value_coded` int(11),
+  `value_coded_name_id` int(11),
+  `value_drug` int(11),
+  `value_datetime` datetime,
+  `value_numeric` double,
+  `value_modifier` varchar(2),
   `value_text` text,
-  `date_started` datetime DEFAULT NULL,
-  `date_stopped` datetime DEFAULT NULL,
-  `comments` varchar(255) DEFAULT NULL,
-  `creator` int(11) DEFAULT NULL,
-  `date_created` datetime DEFAULT NULL,
-  `voided` smallint(6) DEFAULT NULL,
-  `voided_by` int(11) DEFAULT NULL,
-  `date_voided` datetime DEFAULT NULL,
-  `void_reason` varchar(255) DEFAULT NULL,
-  `value_complex` varchar(255) DEFAULT NULL,
-  `uuid` char(38) DEFAULT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
+  `date_started` datetime,
+  `date_stopped` datetime,
+  `comments` varchar(255),
+  `creator` int(11),
+  `date_created` datetime,
+  `voided` smallint(6),
+  `voided_by` int(11),
+  `date_voided` datetime,
+  `void_reason` varchar(255),
+  `value_complex` varchar(255),
+  `uuid` char(38)
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
 
 --
 -- Table structure for table `task`
@@ -3310,44 +3357,45 @@ CREATE TABLE `task` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `tb_status_observations`
+-- Temporary table structure for view `tb_status_observations`
 --
 
 DROP TABLE IF EXISTS `tb_status_observations`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `tb_status_observations` (
-  `obs_id` int(11) DEFAULT NULL,
-  `person_id` int(11) DEFAULT NULL,
-  `concept_id` int(11) DEFAULT NULL,
-  `encounter_id` int(11) DEFAULT NULL,
-  `order_id` int(11) DEFAULT NULL,
-  `obs_datetime` datetime DEFAULT NULL,
-  `location_id` int(11) DEFAULT NULL,
-  `obs_group_id` int(11) DEFAULT NULL,
-  `accession_number` varchar(255) DEFAULT NULL,
-  `value_group_id` int(11) DEFAULT NULL,
-  `value_boolean` tinyint(1) DEFAULT NULL,
-  `value_coded` int(11) DEFAULT NULL,
-  `value_coded_name_id` int(11) DEFAULT NULL,
-  `value_drug` int(11) DEFAULT NULL,
-  `value_datetime` datetime DEFAULT NULL,
-  `value_numeric` double DEFAULT NULL,
-  `value_modifier` varchar(2) DEFAULT NULL,
+/*!50001 DROP VIEW IF EXISTS `tb_status_observations`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `tb_status_observations` (
+  `obs_id` int(11),
+  `person_id` int(11),
+  `concept_id` int(11),
+  `encounter_id` int(11),
+  `order_id` int(11),
+  `obs_datetime` datetime,
+  `location_id` int(11),
+  `obs_group_id` int(11),
+  `accession_number` varchar(255),
+  `value_group_id` int(11),
+  `value_boolean` tinyint(1),
+  `value_coded` int(11),
+  `value_coded_name_id` int(11),
+  `value_drug` int(11),
+  `value_datetime` datetime,
+  `value_numeric` double,
+  `value_modifier` varchar(2),
   `value_text` text,
-  `date_started` datetime DEFAULT NULL,
-  `date_stopped` datetime DEFAULT NULL,
-  `comments` varchar(255) DEFAULT NULL,
-  `creator` int(11) DEFAULT NULL,
-  `date_created` datetime DEFAULT NULL,
-  `voided` smallint(6) DEFAULT NULL,
-  `voided_by` int(11) DEFAULT NULL,
-  `date_voided` datetime DEFAULT NULL,
-  `void_reason` varchar(255) DEFAULT NULL,
-  `value_complex` varchar(255) DEFAULT NULL,
-  `uuid` char(38) DEFAULT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
+  `date_started` datetime,
+  `date_stopped` datetime,
+  `comments` varchar(255),
+  `creator` int(11),
+  `date_created` datetime,
+  `voided` smallint(6),
+  `voided_by` int(11),
+  `date_voided` datetime,
+  `void_reason` varchar(255),
+  `value_complex` varchar(255),
+  `uuid` char(38)
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
 
 --
 -- Table structure for table `traditional_authority`
@@ -3567,6 +3615,158 @@ CREATE TABLE `weight_height_for_ages` (
   KEY `index_weight_height_for_ages_on_sex` (`sex`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Final view structure for view `clinic_consultation_encounter`
+--
+
+/*!50001 DROP TABLE IF EXISTS `clinic_consultation_encounter`*/;
+/*!50001 DROP VIEW IF EXISTS `clinic_consultation_encounter`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8 */;
+/*!50001 SET character_set_results     = utf8 */;
+/*!50001 SET collation_connection      = utf8_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`localhost` SQL SECURITY INVOKER */
+/*!50001 VIEW `clinic_consultation_encounter` AS select `encounter`.`encounter_id` AS `encounter_id`,`encounter`.`encounter_type` AS `encounter_type`,`encounter`.`patient_id` AS `patient_id`,`encounter`.`provider_id` AS `provider_id`,`encounter`.`location_id` AS `location_id`,`encounter`.`form_id` AS `form_id`,`encounter`.`encounter_datetime` AS `encounter_datetime`,`encounter`.`creator` AS `creator`,`encounter`.`date_created` AS `date_created`,`encounter`.`voided` AS `voided`,`encounter`.`voided_by` AS `voided_by`,`encounter`.`date_voided` AS `date_voided`,`encounter`.`void_reason` AS `void_reason`,`encounter`.`uuid` AS `uuid`,`encounter`.`changed_by` AS `changed_by`,`encounter`.`date_changed` AS `date_changed` from `encounter` where ((`encounter`.`encounter_type` = 53) and (`encounter`.`voided` = 0)) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `clinic_registration_encounter`
+--
+
+/*!50001 DROP TABLE IF EXISTS `clinic_registration_encounter`*/;
+/*!50001 DROP VIEW IF EXISTS `clinic_registration_encounter`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8 */;
+/*!50001 SET character_set_results     = utf8 */;
+/*!50001 SET collation_connection      = utf8_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`localhost` SQL SECURITY INVOKER */
+/*!50001 VIEW `clinic_registration_encounter` AS select `encounter`.`encounter_id` AS `encounter_id`,`encounter`.`encounter_type` AS `encounter_type`,`encounter`.`patient_id` AS `patient_id`,`encounter`.`provider_id` AS `provider_id`,`encounter`.`location_id` AS `location_id`,`encounter`.`form_id` AS `form_id`,`encounter`.`encounter_datetime` AS `encounter_datetime`,`encounter`.`creator` AS `creator`,`encounter`.`date_created` AS `date_created`,`encounter`.`voided` AS `voided`,`encounter`.`voided_by` AS `voided_by`,`encounter`.`date_voided` AS `date_voided`,`encounter`.`void_reason` AS `void_reason`,`encounter`.`uuid` AS `uuid`,`encounter`.`changed_by` AS `changed_by`,`encounter`.`date_changed` AS `date_changed` from `encounter` where ((`encounter`.`encounter_type` = 9) and (`encounter`.`voided` = 0)) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `earliest_start_date`
+--
+
+/*!50001 DROP TABLE IF EXISTS `earliest_start_date`*/;
+/*!50001 DROP VIEW IF EXISTS `earliest_start_date`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8 */;
+/*!50001 SET character_set_results     = utf8 */;
+/*!50001 SET collation_connection      = utf8_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`localhost` SQL SECURITY INVOKER */
+/*!50001 VIEW `earliest_start_date` AS select `p`.`patient_id` AS `patient_id`,`p`.`date_enrolled` AS `date_enrolled`,min(`s`.`start_date`) AS `earliest_start_date`,`person`.`death_date` AS `death_date` from ((`patient_program` `p` left join `patient_state` `s` on((`p`.`patient_program_id` = `s`.`patient_program_id`))) left join `person` on((`person`.`person_id` = `p`.`patient_id`))) where ((`p`.`voided` = 0) and (`s`.`voided` = 0) and (`p`.`program_id` = 1) and (`s`.`state` = 7)) group by `p`.`patient_id` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `patient_pregnant_obs`
+--
+
+/*!50001 DROP TABLE IF EXISTS `patient_pregnant_obs`*/;
+/*!50001 DROP VIEW IF EXISTS `patient_pregnant_obs`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8 */;
+/*!50001 SET character_set_results     = utf8 */;
+/*!50001 SET collation_connection      = utf8_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`localhost` SQL SECURITY INVOKER */
+/*!50001 VIEW `patient_pregnant_obs` AS select `obs`.`obs_id` AS `obs_id`,`obs`.`person_id` AS `person_id`,`obs`.`concept_id` AS `concept_id`,`obs`.`encounter_id` AS `encounter_id`,`obs`.`order_id` AS `order_id`,`obs`.`obs_datetime` AS `obs_datetime`,`obs`.`location_id` AS `location_id`,`obs`.`obs_group_id` AS `obs_group_id`,`obs`.`accession_number` AS `accession_number`,`obs`.`value_group_id` AS `value_group_id`,`obs`.`value_boolean` AS `value_boolean`,`obs`.`value_coded` AS `value_coded`,`obs`.`value_coded_name_id` AS `value_coded_name_id`,`obs`.`value_drug` AS `value_drug`,`obs`.`value_datetime` AS `value_datetime`,`obs`.`value_numeric` AS `value_numeric`,`obs`.`value_modifier` AS `value_modifier`,`obs`.`value_text` AS `value_text`,`obs`.`date_started` AS `date_started`,`obs`.`date_stopped` AS `date_stopped`,`obs`.`comments` AS `comments`,`obs`.`creator` AS `creator`,`obs`.`date_created` AS `date_created`,`obs`.`voided` AS `voided`,`obs`.`voided_by` AS `voided_by`,`obs`.`date_voided` AS `date_voided`,`obs`.`void_reason` AS `void_reason`,`obs`.`value_complex` AS `value_complex`,`obs`.`uuid` AS `uuid` from `obs` where ((`obs`.`concept_id` = 6131) and (`obs`.`value_coded` = 1065) and (`obs`.`voided` = 0)) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `patient_state_on_arvs`
+--
+
+/*!50001 DROP TABLE IF EXISTS `patient_state_on_arvs`*/;
+/*!50001 DROP VIEW IF EXISTS `patient_state_on_arvs`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8 */;
+/*!50001 SET character_set_results     = utf8 */;
+/*!50001 SET collation_connection      = utf8_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`localhost` SQL SECURITY INVOKER */
+/*!50001 VIEW `patient_state_on_arvs` AS select `patient_state`.`patient_state_id` AS `patient_state_id`,`patient_state`.`patient_program_id` AS `patient_program_id`,`patient_state`.`state` AS `state`,`patient_state`.`start_date` AS `start_date`,`patient_state`.`end_date` AS `end_date`,`patient_state`.`creator` AS `creator`,`patient_state`.`date_created` AS `date_created`,`patient_state`.`changed_by` AS `changed_by`,`patient_state`.`date_changed` AS `date_changed`,`patient_state`.`voided` AS `voided`,`patient_state`.`voided_by` AS `voided_by`,`patient_state`.`date_voided` AS `date_voided`,`patient_state`.`void_reason` AS `void_reason`,`patient_state`.`uuid` AS `uuid` from `patient_state` where ((`patient_state`.`state` = 7) and (`patient_state`.`voided` = 0)) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `regimen_observation`
+--
+
+/*!50001 DROP TABLE IF EXISTS `regimen_observation`*/;
+/*!50001 DROP VIEW IF EXISTS `regimen_observation`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8 */;
+/*!50001 SET character_set_results     = utf8 */;
+/*!50001 SET collation_connection      = utf8_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`localhost` SQL SECURITY INVOKER */
+/*!50001 VIEW `regimen_observation` AS select `obs`.`obs_id` AS `obs_id`,`obs`.`person_id` AS `person_id`,`obs`.`concept_id` AS `concept_id`,`obs`.`encounter_id` AS `encounter_id`,`obs`.`order_id` AS `order_id`,`obs`.`obs_datetime` AS `obs_datetime`,`obs`.`location_id` AS `location_id`,`obs`.`obs_group_id` AS `obs_group_id`,`obs`.`accession_number` AS `accession_number`,`obs`.`value_group_id` AS `value_group_id`,`obs`.`value_boolean` AS `value_boolean`,`obs`.`value_coded` AS `value_coded`,`obs`.`value_coded_name_id` AS `value_coded_name_id`,`obs`.`value_drug` AS `value_drug`,`obs`.`value_datetime` AS `value_datetime`,`obs`.`value_numeric` AS `value_numeric`,`obs`.`value_modifier` AS `value_modifier`,`obs`.`value_text` AS `value_text`,`obs`.`date_started` AS `date_started`,`obs`.`date_stopped` AS `date_stopped`,`obs`.`comments` AS `comments`,`obs`.`creator` AS `creator`,`obs`.`date_created` AS `date_created`,`obs`.`voided` AS `voided`,`obs`.`voided_by` AS `voided_by`,`obs`.`date_voided` AS `date_voided`,`obs`.`void_reason` AS `void_reason`,`obs`.`value_complex` AS `value_complex`,`obs`.`uuid` AS `uuid` from `obs` where ((`obs`.`concept_id` = 2559) and (`obs`.`voided` = 0)) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `start_date_observation`
+--
+
+/*!50001 DROP TABLE IF EXISTS `start_date_observation`*/;
+/*!50001 DROP VIEW IF EXISTS `start_date_observation`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8 */;
+/*!50001 SET character_set_results     = utf8 */;
+/*!50001 SET collation_connection      = utf8_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`localhost` SQL SECURITY INVOKER */
+/*!50001 VIEW `start_date_observation` AS select `obs`.`obs_id` AS `obs_id`,`obs`.`person_id` AS `person_id`,`obs`.`concept_id` AS `concept_id`,`obs`.`encounter_id` AS `encounter_id`,`obs`.`order_id` AS `order_id`,`obs`.`obs_datetime` AS `obs_datetime`,`obs`.`location_id` AS `location_id`,`obs`.`obs_group_id` AS `obs_group_id`,`obs`.`accession_number` AS `accession_number`,`obs`.`value_group_id` AS `value_group_id`,`obs`.`value_boolean` AS `value_boolean`,`obs`.`value_coded` AS `value_coded`,`obs`.`value_coded_name_id` AS `value_coded_name_id`,`obs`.`value_drug` AS `value_drug`,`obs`.`value_datetime` AS `value_datetime`,`obs`.`value_numeric` AS `value_numeric`,`obs`.`value_modifier` AS `value_modifier`,`obs`.`value_text` AS `value_text`,`obs`.`date_started` AS `date_started`,`obs`.`date_stopped` AS `date_stopped`,`obs`.`comments` AS `comments`,`obs`.`creator` AS `creator`,`obs`.`date_created` AS `date_created`,`obs`.`voided` AS `voided`,`obs`.`voided_by` AS `voided_by`,`obs`.`date_voided` AS `date_voided`,`obs`.`void_reason` AS `void_reason`,`obs`.`value_complex` AS `value_complex`,`obs`.`uuid` AS `uuid` from `obs` where ((`obs`.`concept_id` = 2516) and (`obs`.`voided` = 0)) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `tb_status_observations`
+--
+
+/*!50001 DROP TABLE IF EXISTS `tb_status_observations`*/;
+/*!50001 DROP VIEW IF EXISTS `tb_status_observations`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8 */;
+/*!50001 SET character_set_results     = utf8 */;
+/*!50001 SET collation_connection      = utf8_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`localhost` SQL SECURITY INVOKER */
+/*!50001 VIEW `tb_status_observations` AS select `obs`.`obs_id` AS `obs_id`,`obs`.`person_id` AS `person_id`,`obs`.`concept_id` AS `concept_id`,`obs`.`encounter_id` AS `encounter_id`,`obs`.`order_id` AS `order_id`,`obs`.`obs_datetime` AS `obs_datetime`,`obs`.`location_id` AS `location_id`,`obs`.`obs_group_id` AS `obs_group_id`,`obs`.`accession_number` AS `accession_number`,`obs`.`value_group_id` AS `value_group_id`,`obs`.`value_boolean` AS `value_boolean`,`obs`.`value_coded` AS `value_coded`,`obs`.`value_coded_name_id` AS `value_coded_name_id`,`obs`.`value_drug` AS `value_drug`,`obs`.`value_datetime` AS `value_datetime`,`obs`.`value_numeric` AS `value_numeric`,`obs`.`value_modifier` AS `value_modifier`,`obs`.`value_text` AS `value_text`,`obs`.`date_started` AS `date_started`,`obs`.`date_stopped` AS `date_stopped`,`obs`.`comments` AS `comments`,`obs`.`creator` AS `creator`,`obs`.`date_created` AS `date_created`,`obs`.`voided` AS `voided`,`obs`.`voided_by` AS `voided_by`,`obs`.`date_voided` AS `date_voided`,`obs`.`void_reason` AS `void_reason`,`obs`.`value_complex` AS `value_complex`,`obs`.`uuid` AS `uuid` from `obs` where ((`obs`.`concept_id` = 7459) and (`obs`.`voided` = 0)) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -3577,4 +3777,4 @@ CREATE TABLE `weight_height_for_ages` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2012-05-10 23:59:21
+-- Dump completed on 2012-05-12 11:01:44
