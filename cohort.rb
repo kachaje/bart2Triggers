@@ -728,11 +728,16 @@ end
 def total_on_art(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT DISTINCT patient_id FROM patient_report WHERE DATE(registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(art_start_date,'0000-00-00') != '0000-00-00' AND NOT ((CASE WHEN " + 
-      "COALESCE(expiry_date_for_last_arvs,'0000-00-00') != '0000-00-00' " + 
-      "AND COALESCE(last_visit_date,'0000-00-00') != '0000-00-00' THEN DATEDIFF(last_visit_date, expiry_date_for_last_arvs) " + 
-      "ELSE 0 END) >= 60) AND latest_state = 'On antiretrovirals'")
+  rs = con.query("SELECT DISTINCT p.patient_id FROM patient_report p LEFT OUTER JOIN " + 
+      "patient_report_details d ON p.patient_id = d.patient_id WHERE COALESCE(p.art_start_date, " + 
+      "'0000-00-00') != '0000-00-00' AND COALESCE(p.registration_date, '0000-00-00') != '0000-00-00' " + 
+      "AND DATE(p.registration_date) <= '#{end_date}' AND not((d.latest_state = 'Patient died' " + 
+      "AND d.latest_state_date <= '#{end_date}') OR (d.latest_state = 'Patient transferred out' AND " + 
+      "d.latest_state_date <= '#{end_date}') OR (COALESCE(d.arv_drugs_stopped,'0000-00-00') != '0000-00-00' " + 
+      "AND d.arv_drugs_stopped <= '#{end_date}') OR ((CASE WHEN COALESCE(p.expiry_date_for_last_arvs,'') != '' " + 
+      "AND COALESCE(d.last_visit_date,'0000-00-00') != '0000-00-00' THEN DATEDIFF(d.last_visit_date, p.expiry_date_for_last_arvs) " + 
+      "ELSE 0 END) >= 60 AND DATE(p.expiry_date_for_last_arvs) <= '#{end_date}')) AND (d.latest_state = 'On antiretrovirals' AND " + 
+      "d.latest_state_date <= '#{end_date}')")
   
   row = rs.num_rows
   
@@ -815,7 +820,8 @@ def defaulted(start_date=Time.now, end_date=Time.now, section=nil)
       " ON d.patient_id = p.patient_id WHERE DATE(p.registration_date) <= '#{end_date}' AND " + 
       "COALESCE(p.art_start_date,'0000-00-00') != '0000-00-00' AND (CASE WHEN COALESCE(p.expiry_date_for_last_arvs,'') != '' " + 
       "AND COALESCE(d.last_visit_date,'0000-00-00') != '0000-00-00' THEN DATEDIFF(d.last_visit_date, p.expiry_date_for_last_arvs) " + 
-      "ELSE 0 END) >= 60 AND DATE(p.expiry_date_for_last_arvs) <= '#{end_date}'")
+      "ELSE 0 END) >= 60 AND DATE(p.expiry_date_for_last_arvs) <= '#{end_date}' AND (d.latest_state = 'On antiretrovirals' AND " + 
+      "d.latest_state_date <= '#{end_date}')")
   
   row = rs.num_rows
   
@@ -852,12 +858,15 @@ end
 def unknown_outcome(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT DISTINCT d.patient_id FROM patient_report_details d LEFT OUTER JOIN patient_report p " + 
-      " ON d.patient_id = p.patient_id WHERE DATE(p.registration_date) <= ' #{end_date}' AND " + 
-      "COALESCE(p.art_start_date,'0000-00-00') != '0000-00-00' AND d.latest_state != 'Patient transferred out' " + 
-      "AND DATEDIFF(d.last_visit_date, p.expiry_date_for_last_arvs) < 60 AND d.latest_state != 'Patient died' " + 
-      "AND DATE(d.latest_state_date) <= '#{end_date}' AND d.latest_state = 'On antiretrovirals' " + 
-      "AND DATE(d.last_visit_date) <= '#{end_date}'")
+  rs = con.query("SELECT DISTINCT p.patient_id FROM patient_report p LEFT OUTER JOIN patient_report_details d ON p.patient_id = " + 
+      "d.patient_id WHERE COALESCE(p.art_start_date, '0000-00-00') != '0000-00-00' AND " + 
+      "COALESCE(p.registration_date, '0000-00-00') != '0000-00-00' AND DATE(p.registration_date) " + 
+      "<= '#{end_date}' AND not((d.latest_state = 'Patient died' AND d.latest_state_date <= '#{end_date}') " + 
+      "OR (d.latest_state = 'Patient transferred out' AND d.latest_state_date <= '#{end_date}') OR " + 
+      " (COALESCE(d.arv_drugs_stopped,'0000-00-00') != '0000-00-00' AND d.arv_drugs_stopped <= '#{end_date}') " + 
+      "OR (datediff(d.last_visit_date, d.expiry_date_for_last_arvs) >= 60 AND DATE(d.expiry_date_for_last_arvs) " + 
+      "< '#{end_date}') OR (d.latest_state = 'On antiretrovirals' AND d.latest_state_date <= '#{end_date}') " + 
+      "OR (d.latest_state = 'Treatment stopped' AND d.latest_state_date <= '#{end_date}'))")
   
   row = rs.num_rows
   
@@ -867,10 +876,16 @@ end
 def n1a(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT DISTINCT d.patient_id fields FROM patient_report_details d LEFT OUTER JOIN patient_report p " + 
-      " ON p.patient_id = d.patient_id WHERE DATE(p.registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(p.art_start_date,'0000-00-00') != '0000-00-00' AND DATE(d.latest_regimen_date) < '#{end_date}' " + 
-      "AND d.latest_regimen = '1A' AND NOT (p.latest_state = 'Patient died') AND DATE(d.latest_state_date) < '#{end_date}'")
+  rs = con.query("SELECT DISTINCT p.patient_id FROM patient_report p LEFT OUTER JOIN " + 
+      "patient_report_details d ON p.patient_id = d.patient_id WHERE COALESCE(p.art_start_date, " + 
+      "'0000-00-00') != '0000-00-00' AND COALESCE(p.registration_date, '0000-00-00') != '0000-00-00' " + 
+      "AND DATE(p.registration_date) <= '#{end_date}' AND not((d.latest_state = 'Patient died' " + 
+      "AND d.latest_state_date <= '#{end_date}') OR (d.latest_state = 'Patient transferred out' AND " + 
+      "d.latest_state_date <= '#{end_date}') OR (COALESCE(d.arv_drugs_stopped,'0000-00-00') != '0000-00-00' " + 
+      "AND d.arv_drugs_stopped <= '#{end_date}') OR ((CASE WHEN COALESCE(p.expiry_date_for_last_arvs,'') != '' " + 
+      "AND COALESCE(d.last_visit_date,'0000-00-00') != '0000-00-00' THEN DATEDIFF(d.last_visit_date, p.expiry_date_for_last_arvs) " + 
+      "ELSE 0 END) >= 60 AND DATE(p.expiry_date_for_last_arvs) <= '#{end_date}')) AND (d.latest_state = 'On antiretrovirals' AND " + 
+      "d.latest_state_date <= '#{end_date}') AND d.latest_regimen = '1A'")
   
   row = rs.num_rows
   
@@ -880,10 +895,16 @@ end
 def n1p(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT DISTINCT d.patient_id fields FROM patient_report_details d LEFT OUTER JOIN patient_report p " + 
-      " ON p.patient_id = d.patient_id WHERE DATE(p.registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(p.art_start_date,'0000-00-00') != '0000-00-00' AND DATE(d.latest_regimen_date) < '#{end_date}' " + 
-      "AND d.latest_regimen = '1P' AND NOT (p.latest_state = 'Patient died') AND DATE(d.latest_state_date) < '#{end_date}'")
+  rs = con.query("SELECT DISTINCT p.patient_id FROM patient_report p LEFT OUTER JOIN " + 
+      "patient_report_details d ON p.patient_id = d.patient_id WHERE COALESCE(p.art_start_date, " + 
+      "'0000-00-00') != '0000-00-00' AND COALESCE(p.registration_date, '0000-00-00') != '0000-00-00' " + 
+      "AND DATE(p.registration_date) <= '#{end_date}' AND not((d.latest_state = 'Patient died' " + 
+      "AND d.latest_state_date <= '#{end_date}') OR (d.latest_state = 'Patient transferred out' AND " + 
+      "d.latest_state_date <= '#{end_date}') OR (COALESCE(d.arv_drugs_stopped,'0000-00-00') != '0000-00-00' " + 
+      "AND d.arv_drugs_stopped <= '#{end_date}') OR ((CASE WHEN COALESCE(p.expiry_date_for_last_arvs,'') != '' " + 
+      "AND COALESCE(d.last_visit_date,'0000-00-00') != '0000-00-00' THEN DATEDIFF(d.last_visit_date, p.expiry_date_for_last_arvs) " + 
+      "ELSE 0 END) >= 60 AND DATE(p.expiry_date_for_last_arvs) <= '#{end_date}')) AND (d.latest_state = 'On antiretrovirals' AND " + 
+      "d.latest_state_date <= '#{end_date}') AND d.latest_regimen = '1P'")
   
   row = rs.num_rows
   
@@ -893,10 +914,16 @@ end
 def n2a(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT DISTINCT d.patient_id fields FROM patient_report_details d LEFT OUTER JOIN patient_report p " + 
-      " ON p.patient_id = d.patient_id WHERE DATE(p.registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(p.art_start_date,'0000-00-00') != '0000-00-00' AND DATE(d.latest_regimen_date) < '#{end_date}' " + 
-      "AND d.latest_regimen = '2A' AND NOT (p.latest_state = 'Patient died') AND DATE(d.latest_state_date) < '#{end_date}'")
+  rs = con.query("SELECT DISTINCT p.patient_id FROM patient_report p LEFT OUTER JOIN " + 
+      "patient_report_details d ON p.patient_id = d.patient_id WHERE COALESCE(p.art_start_date, " + 
+      "'0000-00-00') != '0000-00-00' AND COALESCE(p.registration_date, '0000-00-00') != '0000-00-00' " + 
+      "AND DATE(p.registration_date) <= '#{end_date}' AND not((d.latest_state = 'Patient died' " + 
+      "AND d.latest_state_date <= '#{end_date}') OR (d.latest_state = 'Patient transferred out' AND " + 
+      "d.latest_state_date <= '#{end_date}') OR (COALESCE(d.arv_drugs_stopped,'0000-00-00') != '0000-00-00' " + 
+      "AND d.arv_drugs_stopped <= '#{end_date}') OR ((CASE WHEN COALESCE(p.expiry_date_for_last_arvs,'') != '' " + 
+      "AND COALESCE(d.last_visit_date,'0000-00-00') != '0000-00-00' THEN DATEDIFF(d.last_visit_date, p.expiry_date_for_last_arvs) " + 
+      "ELSE 0 END) >= 60 AND DATE(p.expiry_date_for_last_arvs) <= '#{end_date}')) AND (d.latest_state = 'On antiretrovirals' AND " + 
+      "d.latest_state_date <= '#{end_date}') AND d.latest_regimen = '2A'")
   
   row = rs.num_rows
   
@@ -906,10 +933,16 @@ end
 def n2p(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT DISTINCT d.patient_id fields FROM patient_report_details d LEFT OUTER JOIN patient_report p " + 
-      " ON p.patient_id = d.patient_id WHERE DATE(p.registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(p.art_start_date,'0000-00-00') != '0000-00-00' AND DATE(d.latest_regimen_date) < '#{end_date}' " + 
-      "AND d.latest_regimen = '2P' AND NOT (p.latest_state = 'Patient died') AND DATE(d.latest_state_date) < '#{end_date}'")
+  rs = con.query("SELECT DISTINCT p.patient_id FROM patient_report p LEFT OUTER JOIN " + 
+      "patient_report_details d ON p.patient_id = d.patient_id WHERE COALESCE(p.art_start_date, " + 
+      "'0000-00-00') != '0000-00-00' AND COALESCE(p.registration_date, '0000-00-00') != '0000-00-00' " + 
+      "AND DATE(p.registration_date) <= '#{end_date}' AND not((d.latest_state = 'Patient died' " + 
+      "AND d.latest_state_date <= '#{end_date}') OR (d.latest_state = 'Patient transferred out' AND " + 
+      "d.latest_state_date <= '#{end_date}') OR (COALESCE(d.arv_drugs_stopped,'0000-00-00') != '0000-00-00' " + 
+      "AND d.arv_drugs_stopped <= '#{end_date}') OR ((CASE WHEN COALESCE(p.expiry_date_for_last_arvs,'') != '' " + 
+      "AND COALESCE(d.last_visit_date,'0000-00-00') != '0000-00-00' THEN DATEDIFF(d.last_visit_date, p.expiry_date_for_last_arvs) " + 
+      "ELSE 0 END) >= 60 AND DATE(p.expiry_date_for_last_arvs) <= '#{end_date}')) AND (d.latest_state = 'On antiretrovirals' AND " + 
+      "d.latest_state_date <= '#{end_date}') AND d.latest_regimen = '2P'")
   
   row = rs.num_rows
   
@@ -919,10 +952,16 @@ end
 def n3a(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT DISTINCT d.patient_id fields FROM patient_report_details d LEFT OUTER JOIN patient_report p " + 
-      " ON p.patient_id = d.patient_id WHERE DATE(p.registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(p.art_start_date,'0000-00-00') != '0000-00-00' AND DATE(d.latest_regimen_date) < '#{end_date}' " + 
-      "AND d.latest_regimen = '3A' AND NOT (p.latest_state = 'Patient died') AND DATE(d.latest_state_date) < '#{end_date}'")
+  rs = con.query("SELECT DISTINCT p.patient_id FROM patient_report p LEFT OUTER JOIN " + 
+      "patient_report_details d ON p.patient_id = d.patient_id WHERE COALESCE(p.art_start_date, " + 
+      "'0000-00-00') != '0000-00-00' AND COALESCE(p.registration_date, '0000-00-00') != '0000-00-00' " + 
+      "AND DATE(p.registration_date) <= '#{end_date}' AND not((d.latest_state = 'Patient died' " + 
+      "AND d.latest_state_date <= '#{end_date}') OR (d.latest_state = 'Patient transferred out' AND " + 
+      "d.latest_state_date <= '#{end_date}') OR (COALESCE(d.arv_drugs_stopped,'0000-00-00') != '0000-00-00' " + 
+      "AND d.arv_drugs_stopped <= '#{end_date}') OR ((CASE WHEN COALESCE(p.expiry_date_for_last_arvs,'') != '' " + 
+      "AND COALESCE(d.last_visit_date,'0000-00-00') != '0000-00-00' THEN DATEDIFF(d.last_visit_date, p.expiry_date_for_last_arvs) " + 
+      "ELSE 0 END) >= 60 AND DATE(p.expiry_date_for_last_arvs) <= '#{end_date}')) AND (d.latest_state = 'On antiretrovirals' AND " + 
+      "d.latest_state_date <= '#{end_date}') AND d.latest_regimen = '3A'")
   
   row = rs.num_rows
   
@@ -932,10 +971,16 @@ end
 def n3p(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT DISTINCT d.patient_id fields FROM patient_report_details d LEFT OUTER JOIN patient_report p " + 
-      " ON p.patient_id = d.patient_id WHERE DATE(p.registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(p.art_start_date,'0000-00-00') != '0000-00-00' AND DATE(d.latest_regimen_date) < '#{end_date}' " + 
-      "AND d.latest_regimen = '3P' AND NOT (p.latest_state = 'Patient died') AND DATE(d.latest_state_date) < '#{end_date}'")
+  rs = con.query("SELECT DISTINCT p.patient_id FROM patient_report p LEFT OUTER JOIN " + 
+      "patient_report_details d ON p.patient_id = d.patient_id WHERE COALESCE(p.art_start_date, " + 
+      "'0000-00-00') != '0000-00-00' AND COALESCE(p.registration_date, '0000-00-00') != '0000-00-00' " + 
+      "AND DATE(p.registration_date) <= '#{end_date}' AND not((d.latest_state = 'Patient died' " + 
+      "AND d.latest_state_date <= '#{end_date}') OR (d.latest_state = 'Patient transferred out' AND " + 
+      "d.latest_state_date <= '#{end_date}') OR (COALESCE(d.arv_drugs_stopped,'0000-00-00') != '0000-00-00' " + 
+      "AND d.arv_drugs_stopped <= '#{end_date}') OR ((CASE WHEN COALESCE(p.expiry_date_for_last_arvs,'') != '' " + 
+      "AND COALESCE(d.last_visit_date,'0000-00-00') != '0000-00-00' THEN DATEDIFF(d.last_visit_date, p.expiry_date_for_last_arvs) " + 
+      "ELSE 0 END) >= 60 AND DATE(p.expiry_date_for_last_arvs) <= '#{end_date}')) AND (d.latest_state = 'On antiretrovirals' AND " + 
+      "d.latest_state_date <= '#{end_date}') AND d.latest_regimen = '3P'")
   
   row = rs.num_rows
   
@@ -945,10 +990,16 @@ end
 def n4a(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT DISTINCT d.patient_id fields FROM patient_report_details d LEFT OUTER JOIN patient_report p " + 
-      " ON p.patient_id = d.patient_id WHERE DATE(p.registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(p.art_start_date,'0000-00-00') != '0000-00-00' AND DATE(d.latest_regimen_date) < '#{end_date}' " + 
-      "AND d.latest_regimen = '4A' AND NOT (p.latest_state = 'Patient died') AND DATE(d.latest_state_date) < '#{end_date}'")
+  rs = con.query("SELECT DISTINCT p.patient_id FROM patient_report p LEFT OUTER JOIN " + 
+      "patient_report_details d ON p.patient_id = d.patient_id WHERE COALESCE(p.art_start_date, " + 
+      "'0000-00-00') != '0000-00-00' AND COALESCE(p.registration_date, '0000-00-00') != '0000-00-00' " + 
+      "AND DATE(p.registration_date) <= '#{end_date}' AND not((d.latest_state = 'Patient died' " + 
+      "AND d.latest_state_date <= '#{end_date}') OR (d.latest_state = 'Patient transferred out' AND " + 
+      "d.latest_state_date <= '#{end_date}') OR (COALESCE(d.arv_drugs_stopped,'0000-00-00') != '0000-00-00' " + 
+      "AND d.arv_drugs_stopped <= '#{end_date}') OR ((CASE WHEN COALESCE(p.expiry_date_for_last_arvs,'') != '' " + 
+      "AND COALESCE(d.last_visit_date,'0000-00-00') != '0000-00-00' THEN DATEDIFF(d.last_visit_date, p.expiry_date_for_last_arvs) " + 
+      "ELSE 0 END) >= 60 AND DATE(p.expiry_date_for_last_arvs) <= '#{end_date}')) AND (d.latest_state = 'On antiretrovirals' AND " + 
+      "d.latest_state_date <= '#{end_date}') AND d.latest_regimen = '4A'")
   
   row = rs.num_rows
   
@@ -958,10 +1009,16 @@ end
 def n4p(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT DISTINCT d.patient_id fields FROM patient_report_details d LEFT OUTER JOIN patient_report p " + 
-      " ON p.patient_id = d.patient_id WHERE DATE(p.registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(p.art_start_date,'0000-00-00') != '0000-00-00' AND DATE(d.latest_regimen_date) < '#{end_date}' " + 
-      "AND d.latest_regimen = '4P' AND NOT (p.latest_state = 'Patient died') AND DATE(d.latest_state_date) < '#{end_date}'")
+  rs = con.query("SELECT DISTINCT p.patient_id FROM patient_report p LEFT OUTER JOIN " + 
+      "patient_report_details d ON p.patient_id = d.patient_id WHERE COALESCE(p.art_start_date, " + 
+      "'0000-00-00') != '0000-00-00' AND COALESCE(p.registration_date, '0000-00-00') != '0000-00-00' " + 
+      "AND DATE(p.registration_date) <= '#{end_date}' AND not((d.latest_state = 'Patient died' " + 
+      "AND d.latest_state_date <= '#{end_date}') OR (d.latest_state = 'Patient transferred out' AND " + 
+      "d.latest_state_date <= '#{end_date}') OR (COALESCE(d.arv_drugs_stopped,'0000-00-00') != '0000-00-00' " + 
+      "AND d.arv_drugs_stopped <= '#{end_date}') OR ((CASE WHEN COALESCE(p.expiry_date_for_last_arvs,'') != '' " + 
+      "AND COALESCE(d.last_visit_date,'0000-00-00') != '0000-00-00' THEN DATEDIFF(d.last_visit_date, p.expiry_date_for_last_arvs) " + 
+      "ELSE 0 END) >= 60 AND DATE(p.expiry_date_for_last_arvs) <= '#{end_date}')) AND (d.latest_state = 'On antiretrovirals' AND " + 
+      "d.latest_state_date <= '#{end_date}') AND d.latest_regimen = '4P'")
   
   row = rs.num_rows
   
@@ -971,10 +1028,16 @@ end
 def n5a(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT DISTINCT d.patient_id fields FROM patient_report_details d LEFT OUTER JOIN patient_report p " + 
-      " ON p.patient_id = d.patient_id WHERE DATE(p.registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(p.art_start_date,'0000-00-00') != '0000-00-00' AND DATE(d.latest_regimen_date) < '#{end_date}' " + 
-      "AND d.latest_regimen = '5A' AND NOT (p.latest_state = 'Patient died') AND DATE(d.latest_state_date) < '#{end_date}'")
+  rs = con.query("SELECT DISTINCT p.patient_id FROM patient_report p LEFT OUTER JOIN " + 
+      "patient_report_details d ON p.patient_id = d.patient_id WHERE COALESCE(p.art_start_date, " + 
+      "'0000-00-00') != '0000-00-00' AND COALESCE(p.registration_date, '0000-00-00') != '0000-00-00' " + 
+      "AND DATE(p.registration_date) <= '#{end_date}' AND not((d.latest_state = 'Patient died' " + 
+      "AND d.latest_state_date <= '#{end_date}') OR (d.latest_state = 'Patient transferred out' AND " + 
+      "d.latest_state_date <= '#{end_date}') OR (COALESCE(d.arv_drugs_stopped,'0000-00-00') != '0000-00-00' " + 
+      "AND d.arv_drugs_stopped <= '#{end_date}') OR ((CASE WHEN COALESCE(p.expiry_date_for_last_arvs,'') != '' " + 
+      "AND COALESCE(d.last_visit_date,'0000-00-00') != '0000-00-00' THEN DATEDIFF(d.last_visit_date, p.expiry_date_for_last_arvs) " + 
+      "ELSE 0 END) >= 60 AND DATE(p.expiry_date_for_last_arvs) <= '#{end_date}')) AND (d.latest_state = 'On antiretrovirals' AND " + 
+      "d.latest_state_date <= '#{end_date}') AND d.latest_regimen = '5A'")
   
   row = rs.num_rows
   
@@ -984,10 +1047,16 @@ end
 def n6a(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT DISTINCT d.patient_id fields FROM patient_report_details d LEFT OUTER JOIN patient_report p " + 
-      " ON p.patient_id = d.patient_id WHERE DATE(p.registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(p.art_start_date,'0000-00-00') != '0000-00-00' AND DATE(d.latest_regimen_date) < '#{end_date}' " + 
-      "AND d.latest_regimen = '6A' AND NOT (p.latest_state = 'Patient died') AND DATE(d.latest_state_date) < '#{end_date}'")
+  rs = con.query("SELECT DISTINCT p.patient_id FROM patient_report p LEFT OUTER JOIN " + 
+      "patient_report_details d ON p.patient_id = d.patient_id WHERE COALESCE(p.art_start_date, " + 
+      "'0000-00-00') != '0000-00-00' AND COALESCE(p.registration_date, '0000-00-00') != '0000-00-00' " + 
+      "AND DATE(p.registration_date) <= '#{end_date}' AND not((d.latest_state = 'Patient died' " + 
+      "AND d.latest_state_date <= '#{end_date}') OR (d.latest_state = 'Patient transferred out' AND " + 
+      "d.latest_state_date <= '#{end_date}') OR (COALESCE(d.arv_drugs_stopped,'0000-00-00') != '0000-00-00' " + 
+      "AND d.arv_drugs_stopped <= '#{end_date}') OR ((CASE WHEN COALESCE(p.expiry_date_for_last_arvs,'') != '' " + 
+      "AND COALESCE(d.last_visit_date,'0000-00-00') != '0000-00-00' THEN DATEDIFF(d.last_visit_date, p.expiry_date_for_last_arvs) " + 
+      "ELSE 0 END) >= 60 AND DATE(p.expiry_date_for_last_arvs) <= '#{end_date}')) AND (d.latest_state = 'On antiretrovirals' AND " + 
+      "d.latest_state_date <= '#{end_date}') AND d.latest_regimen = '6A'")
   
   row = rs.num_rows
   
@@ -997,10 +1066,16 @@ end
 def n7a(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT DISTINCT d.patient_id fields FROM patient_report_details d LEFT OUTER JOIN patient_report p " + 
-      " ON p.patient_id = d.patient_id WHERE DATE(p.registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(p.art_start_date,'0000-00-00') != '0000-00-00' AND DATE(d.latest_regimen_date) < '#{end_date}' " + 
-      "AND d.latest_regimen = '7A' AND NOT (p.latest_state = 'Patient died') AND DATE(d.latest_state_date) < '#{end_date}'")
+  rs = con.query("SELECT DISTINCT p.patient_id FROM patient_report p LEFT OUTER JOIN " + 
+      "patient_report_details d ON p.patient_id = d.patient_id WHERE COALESCE(p.art_start_date, " + 
+      "'0000-00-00') != '0000-00-00' AND COALESCE(p.registration_date, '0000-00-00') != '0000-00-00' " + 
+      "AND DATE(p.registration_date) <= '#{end_date}' AND not((d.latest_state = 'Patient died' " + 
+      "AND d.latest_state_date <= '#{end_date}') OR (d.latest_state = 'Patient transferred out' AND " + 
+      "d.latest_state_date <= '#{end_date}') OR (COALESCE(d.arv_drugs_stopped,'0000-00-00') != '0000-00-00' " + 
+      "AND d.arv_drugs_stopped <= '#{end_date}') OR ((CASE WHEN COALESCE(p.expiry_date_for_last_arvs,'') != '' " + 
+      "AND COALESCE(d.last_visit_date,'0000-00-00') != '0000-00-00' THEN DATEDIFF(d.last_visit_date, p.expiry_date_for_last_arvs) " + 
+      "ELSE 0 END) >= 60 AND DATE(p.expiry_date_for_last_arvs) <= '#{end_date}')) AND (d.latest_state = 'On antiretrovirals' AND " + 
+      "d.latest_state_date <= '#{end_date}') AND d.latest_regimen = '7A'")
   
   row = rs.num_rows
   
@@ -1010,10 +1085,16 @@ end
 def n8a(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT DISTINCT d.patient_id fields FROM patient_report_details d LEFT OUTER JOIN patient_report p " + 
-      " ON p.patient_id = d.patient_id WHERE DATE(p.registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(p.art_start_date,'0000-00-00') != '0000-00-00' AND DATE(d.latest_regimen_date) < '#{end_date}' " + 
-      "AND d.latest_regimen = '8A' AND NOT (p.latest_state = 'Patient died') AND DATE(d.latest_state_date) < '#{end_date}'")
+  rs = con.query("SELECT DISTINCT p.patient_id FROM patient_report p LEFT OUTER JOIN " + 
+      "patient_report_details d ON p.patient_id = d.patient_id WHERE COALESCE(p.art_start_date, " + 
+      "'0000-00-00') != '0000-00-00' AND COALESCE(p.registration_date, '0000-00-00') != '0000-00-00' " + 
+      "AND DATE(p.registration_date) <= '#{end_date}' AND not((d.latest_state = 'Patient died' " + 
+      "AND d.latest_state_date <= '#{end_date}') OR (d.latest_state = 'Patient transferred out' AND " + 
+      "d.latest_state_date <= '#{end_date}') OR (COALESCE(d.arv_drugs_stopped,'0000-00-00') != '0000-00-00' " + 
+      "AND d.arv_drugs_stopped <= '#{end_date}') OR ((CASE WHEN COALESCE(p.expiry_date_for_last_arvs,'') != '' " + 
+      "AND COALESCE(d.last_visit_date,'0000-00-00') != '0000-00-00' THEN DATEDIFF(d.last_visit_date, p.expiry_date_for_last_arvs) " + 
+      "ELSE 0 END) >= 60 AND DATE(p.expiry_date_for_last_arvs) <= '#{end_date}')) AND (d.latest_state = 'On antiretrovirals' AND " + 
+      "d.latest_state_date <= '#{end_date}') AND d.latest_regimen = '8A'")
   
   row = rs.num_rows
   
@@ -1023,10 +1104,16 @@ end
 def n9p(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT DISTINCT d.patient_id fields FROM patient_report_details d LEFT OUTER JOIN patient_report p " + 
-      " ON p.patient_id = d.patient_id WHERE DATE(p.registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(p.art_start_date,'0000-00-00') != '0000-00-00' AND DATE(d.latest_regimen_date) < '#{end_date}' " + 
-      "AND d.latest_regimen = '9P' AND NOT (p.latest_state = 'Patient died') AND DATE(d.latest_state_date) < '#{end_date}'")
+  rs = con.query("SELECT DISTINCT p.patient_id FROM patient_report p LEFT OUTER JOIN " + 
+      "patient_report_details d ON p.patient_id = d.patient_id WHERE COALESCE(p.art_start_date, " + 
+      "'0000-00-00') != '0000-00-00' AND COALESCE(p.registration_date, '0000-00-00') != '0000-00-00' " + 
+      "AND DATE(p.registration_date) <= '#{end_date}' AND not((d.latest_state = 'Patient died' " + 
+      "AND d.latest_state_date <= '#{end_date}') OR (d.latest_state = 'Patient transferred out' AND " + 
+      "d.latest_state_date <= '#{end_date}') OR (COALESCE(d.arv_drugs_stopped,'0000-00-00') != '0000-00-00' " + 
+      "AND d.arv_drugs_stopped <= '#{end_date}') OR ((CASE WHEN COALESCE(p.expiry_date_for_last_arvs,'') != '' " + 
+      "AND COALESCE(d.last_visit_date,'0000-00-00') != '0000-00-00' THEN DATEDIFF(d.last_visit_date, p.expiry_date_for_last_arvs) " + 
+      "ELSE 0 END) >= 60 AND DATE(p.expiry_date_for_last_arvs) <= '#{end_date}')) AND (d.latest_state = 'On antiretrovirals' AND " + 
+      "d.latest_state_date <= '#{end_date}') AND d.latest_regimen = '9P'")
   
   row = rs.num_rows
   
@@ -1036,14 +1123,16 @@ end
 def non_std(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT DISTINCT d.patient_id fields FROM patient_report_details d LEFT OUTER JOIN patient_report p " + 
-      " ON p.patient_id = d.patient_id WHERE DATE(p.registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(p.art_start_date,'0000-00-00') != '0000-00-00' AND DATE(d.latest_regimen_date) < '#{end_date}' " + 
-      "AND NOT (d.latest_regimen = '1A' OR d.latest_regimen = '1P' OR d.latest_regimen = '2A' " + 
-      "OR d.latest_regimen = '2P' OR d.latest_regimen = '3A' OR d.latest_regimen = '3P' OR " + 
-      "d.latest_regimen = '4A' OR d.latest_regimen = '4P' OR d.latest_regimen = '5A' OR d.latest_regimen = '6A' " + 
-      " OR d.latest_regimen = '7A' OR d.latest_regimen = '8A' OR d.latest_regimen = '9P') " + 
-      " AND NOT (p.latest_state = 'Patient died') AND DATE(d.latest_state_date) < '#{end_date}'")
+  rs = con.query("SELECT DISTINCT p.patient_id FROM patient_report p LEFT OUTER JOIN " + 
+      "patient_report_details d ON p.patient_id = d.patient_id WHERE COALESCE(p.art_start_date, " + 
+      "'0000-00-00') != '0000-00-00' AND COALESCE(p.registration_date, '0000-00-00') != '0000-00-00' " + 
+      "AND DATE(p.registration_date) <= '#{end_date}' AND not((d.latest_state = 'Patient died' " + 
+      "AND d.latest_state_date <= '#{end_date}') OR (d.latest_state = 'Patient transferred out' AND " + 
+      "d.latest_state_date <= '#{end_date}') OR (COALESCE(d.arv_drugs_stopped,'0000-00-00') != '0000-00-00' " + 
+      "AND d.arv_drugs_stopped <= '#{end_date}') OR ((CASE WHEN COALESCE(p.expiry_date_for_last_arvs,'') != '' " + 
+      "AND COALESCE(d.last_visit_date,'0000-00-00') != '0000-00-00' THEN DATEDIFF(d.last_visit_date, p.expiry_date_for_last_arvs) " + 
+      "ELSE 0 END) >= 60 AND DATE(p.expiry_date_for_last_arvs) <= '#{end_date}')) AND (d.latest_state = 'On antiretrovirals' AND " + 
+      "d.latest_state_date <= '#{end_date}') AND (COALESCE(d.latest_regimen,'') = '')")
   
   row = rs.num_rows
   
@@ -1053,12 +1142,17 @@ end
 def tb_no_suspect(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT DISTINCT d.patient_id fields FROM patient_report_details d LEFT OUTER JOIN patient_report p " + 
-      " ON p.patient_id = d.patient_id WHERE DATE(p.registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(p.art_start_date,'0000-00-00') != '0000-00-00' AND DATE(d.tb_status_date) < '#{end_date}' " + 
-      "AND (d.tb_status = 'TB NOT suspected' OR d.tb_status = 'Nosup') AND NOT (p.latest_state = 'Patient died') " + 
-      " AND DATE(p.latest_state_date) " + 
-      "< '#{end_date}'")
+  rs = con.query("SELECT DISTINCT p.patient_id FROM patient_report p LEFT OUTER JOIN " + 
+      "patient_report_details d ON p.patient_id = d.patient_id WHERE COALESCE(p.art_start_date, " + 
+      "'0000-00-00') != '0000-00-00' AND COALESCE(p.registration_date, '0000-00-00') != '0000-00-00' " + 
+      "AND DATE(p.registration_date) <= '#{end_date}' AND not((d.latest_state = 'Patient died' " + 
+      "AND d.latest_state_date <= '#{end_date}') OR (d.latest_state = 'Patient transferred out' AND " + 
+      "d.latest_state_date <= '#{end_date}') OR (COALESCE(d.arv_drugs_stopped,'0000-00-00') != '0000-00-00' " + 
+      "AND d.arv_drugs_stopped <= '#{end_date}') OR ((CASE WHEN COALESCE(p.expiry_date_for_last_arvs,'') != '' " + 
+      "AND COALESCE(d.last_visit_date,'0000-00-00') != '0000-00-00' THEN DATEDIFF(d.last_visit_date, p.expiry_date_for_last_arvs) " + 
+      "ELSE 0 END) >= 60 AND DATE(p.expiry_date_for_last_arvs) <= '#{end_date}')) AND (d.latest_state = 'On antiretrovirals' AND " + 
+      "d.latest_state_date <= '#{end_date}') AND DATE(d.tb_status_date) <= '#{end_date}' " + 
+      "AND (d.tb_status = 'TB NOT suspected' OR d.tb_status = 'Nosup')")
   
   row = rs.num_rows
   
@@ -1068,12 +1162,17 @@ end
 def tb_suspected(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT DISTINCT d.patient_id fields FROM patient_report_details d LEFT OUTER JOIN patient_report p " + 
-      " ON p.patient_id = d.patient_id WHERE DATE(p.registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(p.art_start_date,'0000-00-00') != '0000-00-00' AND DATE(d.tb_status_date) < '#{end_date}' " + 
-      "AND (d.tb_status = 'TB suspected' OR d.tb_status = 'sup') AND NOT (p.latest_state = 'Patient died') " + 
-      " AND DATE(p.latest_state_date) " + 
-      "< '#{end_date}'")
+  rs = con.query("SELECT DISTINCT p.patient_id FROM patient_report p LEFT OUTER JOIN " + 
+      "patient_report_details d ON p.patient_id = d.patient_id WHERE COALESCE(p.art_start_date, " + 
+      "'0000-00-00') != '0000-00-00' AND COALESCE(p.registration_date, '0000-00-00') != '0000-00-00' " + 
+      "AND DATE(p.registration_date) <= '#{end_date}' AND not((d.latest_state = 'Patient died' " + 
+      "AND d.latest_state_date <= '#{end_date}') OR (d.latest_state = 'Patient transferred out' AND " + 
+      "d.latest_state_date <= '#{end_date}') OR (COALESCE(d.arv_drugs_stopped,'0000-00-00') != '0000-00-00' " + 
+      "AND d.arv_drugs_stopped <= '#{end_date}') OR ((CASE WHEN COALESCE(p.expiry_date_for_last_arvs,'') != '' " + 
+      "AND COALESCE(d.last_visit_date,'0000-00-00') != '0000-00-00' THEN DATEDIFF(d.last_visit_date, p.expiry_date_for_last_arvs) " + 
+      "ELSE 0 END) >= 60 AND DATE(p.expiry_date_for_last_arvs) <= '#{end_date}')) AND (d.latest_state = 'On antiretrovirals' AND " + 
+      "d.latest_state_date <= '#{end_date}') AND DATE(d.tb_status_date) <= '#{end_date}' " + 
+      "AND (d.tb_status = 'TB suspected' OR d.tb_status = 'sup')")
   
   row = rs.num_rows
   
@@ -1083,12 +1182,17 @@ end
 def tb_confirm_not_treat(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT DISTINCT d.patient_id fields FROM patient_report_details d LEFT OUTER JOIN patient_report p " + 
-      " ON p.patient_id = d.patient_id WHERE DATE(p.registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(p.art_start_date,'0000-00-00') != '0000-00-00' AND DATE(d.tb_status_date) < '#{end_date}' " + 
-      "AND (d.tb_status = 'Confirmed TB not on treatment' OR d.tb_status = 'Norx') AND NOT " + 
-      "(p.latest_state = 'Patient died') AND DATE(p.latest_state_date) " + 
-      "< '#{end_date}'")
+  rs = con.query("SELECT DISTINCT p.patient_id FROM patient_report p LEFT OUTER JOIN " + 
+      "patient_report_details d ON p.patient_id = d.patient_id WHERE COALESCE(p.art_start_date, " + 
+      "'0000-00-00') != '0000-00-00' AND COALESCE(p.registration_date, '0000-00-00') != '0000-00-00' " + 
+      "AND DATE(p.registration_date) <= '#{end_date}' AND not((d.latest_state = 'Patient died' " + 
+      "AND d.latest_state_date <= '#{end_date}') OR (d.latest_state = 'Patient transferred out' AND " + 
+      "d.latest_state_date <= '#{end_date}') OR (COALESCE(d.arv_drugs_stopped,'0000-00-00') != '0000-00-00' " + 
+      "AND d.arv_drugs_stopped <= '#{end_date}') OR ((CASE WHEN COALESCE(p.expiry_date_for_last_arvs,'') != '' " + 
+      "AND COALESCE(d.last_visit_date,'0000-00-00') != '0000-00-00' THEN DATEDIFF(d.last_visit_date, p.expiry_date_for_last_arvs) " + 
+      "ELSE 0 END) >= 60 AND DATE(p.expiry_date_for_last_arvs) <= '#{end_date}')) AND (d.latest_state = 'On antiretrovirals' AND " + 
+      "d.latest_state_date <= '#{end_date}') AND DATE(d.tb_status_date) <= '#{end_date}' " + 
+      "AND (d.tb_status = 'Confirmed TB not on treatment' OR d.tb_status = 'Norx')")
   
   row = rs.num_rows
   
@@ -1098,12 +1202,17 @@ end
 def tb_confirmed(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT DISTINCT d.patient_id fields FROM patient_report_details d LEFT OUTER JOIN patient_report p " + 
-      " ON p.patient_id = d.patient_id WHERE DATE(p.registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(p.art_start_date,'0000-00-00') != '0000-00-00' AND DATE(d.tb_status_date) < '#{end_date}' " + 
-      "AND (d.tb_status = 'Confirmed TB on treatment' OR d.tb_status = 'RX') AND NOT (p.latest_state = 'Patient died') " + 
-      " AND DATE(p.latest_state_date) " + 
-      "< '#{end_date}'")
+  rs = con.query("SELECT DISTINCT p.patient_id FROM patient_report p LEFT OUTER JOIN " + 
+      "patient_report_details d ON p.patient_id = d.patient_id WHERE COALESCE(p.art_start_date, " + 
+      "'0000-00-00') != '0000-00-00' AND COALESCE(p.registration_date, '0000-00-00') != '0000-00-00' " + 
+      "AND DATE(p.registration_date) <= '#{end_date}' AND not((d.latest_state = 'Patient died' " + 
+      "AND d.latest_state_date <= '#{end_date}') OR (d.latest_state = 'Patient transferred out' AND " + 
+      "d.latest_state_date <= '#{end_date}') OR (COALESCE(d.arv_drugs_stopped,'0000-00-00') != '0000-00-00' " + 
+      "AND d.arv_drugs_stopped <= '#{end_date}') OR ((CASE WHEN COALESCE(p.expiry_date_for_last_arvs,'') != '' " + 
+      "AND COALESCE(d.last_visit_date,'0000-00-00') != '0000-00-00' THEN DATEDIFF(d.last_visit_date, p.expiry_date_for_last_arvs) " + 
+      "ELSE 0 END) >= 60 AND DATE(p.expiry_date_for_last_arvs) <= '#{end_date}')) AND (d.latest_state = 'On antiretrovirals' AND " + 
+      "d.latest_state_date <= '#{end_date}') AND DATE(d.tb_status_date) <= '#{end_date}' " + 
+      "AND (d.tb_status = 'Confirmed TB on treatment' OR d.tb_status = 'RX')")
   
   row = rs.num_rows
   
@@ -1113,14 +1222,77 @@ end
 def unknown_tb(start_date=Time.now, end_date=Time.now, section=nil)
 	con = connect("development")
   
-  rs = con.query("SELECT DISTINCT d.patient_id fields FROM patient_report_details d LEFT OUTER JOIN patient_report p " + 
-      " ON p.patient_id = d.patient_id WHERE DATE(p.registration_date) <= '#{end_date}' AND " + 
-      "COALESCE(p.art_start_date,'0000-00-00') != '0000-00-00' AND DATE(d.tb_status_date) < '#{end_date}' " + 
-      "AND NOT ((d.tb_status = 'Confirmed TB on treatment' OR d.tb_status = 'RX') OR " + 
-      "(d.tb_status = 'Confirmed TB not on treatment' OR d.tb_status = 'Norx') " + 
-      "OR (d.tb_status = 'TB suspected' OR d.tb_status = 'sup') OR (d.tb_status = 'TB NOT suspected' " + 
-      "OR d.tb_status = 'Nosup')) AND NOT (p.latest_state = 'Patient died') " + 
-      "AND DATE(d.latest_state_date) < '#{end_date}'")
+  rs = con.query("SELECT DISTINCT p.patient_id FROM patient_report p LEFT OUTER JOIN " + 
+      "patient_report_details d ON p.patient_id = d.patient_id WHERE COALESCE(p.art_start_date, " + 
+      "'0000-00-00') != '0000-00-00' AND COALESCE(p.registration_date, '0000-00-00') != '0000-00-00' " + 
+      "AND DATE(p.registration_date) <= '#{end_date}' AND not((d.latest_state = 'Patient died' " + 
+      "AND d.latest_state_date <= '#{end_date}') OR (d.latest_state = 'Patient transferred out' AND " + 
+      "d.latest_state_date <= '#{end_date}') OR (COALESCE(d.arv_drugs_stopped,'0000-00-00') != '0000-00-00' " + 
+      "AND d.arv_drugs_stopped <= '#{end_date}') OR ((CASE WHEN COALESCE(p.expiry_date_for_last_arvs,'') != '' " + 
+      "AND COALESCE(d.last_visit_date,'0000-00-00') != '0000-00-00' THEN DATEDIFF(d.last_visit_date, p.expiry_date_for_last_arvs) " + 
+      "ELSE 0 END) >= 60 AND DATE(p.expiry_date_for_last_arvs) <= '#{end_date}')) AND (d.latest_state = 'On antiretrovirals' AND " + 
+      "d.latest_state_date <= '#{end_date}') AND COALESCE(d.tb_status,'Unknown') = 'Unknown'" + 
+      " AND DATE(d.tb_status_date) <= '#{end_date}'")
+  
+  row = rs.num_rows
+  
+  reply(row)
+end
+
+def side_effects(start_date=Time.now, end_date=Time.now, section=nil)
+  con = connect("development")
+  
+  rs = con.query("SELECT DISTINCT p.patient_id FROM patient_report p LEFT OUTER JOIN " + 
+      "patient_report_details d ON p.patient_id = d.patient_id WHERE COALESCE(p.art_start_date, " + 
+      "'0000-00-00') != '0000-00-00' AND COALESCE(p.registration_date, '0000-00-00') != '0000-00-00' " + 
+      "AND DATE(p.registration_date) <= '#{end_date}' AND not((d.latest_state = 'Patient died' " + 
+      "AND d.latest_state_date <= '#{end_date}') OR (d.latest_state = 'Patient transferred out' AND " + 
+      "d.latest_state_date <= '#{end_date}') OR (COALESCE(d.arv_drugs_stopped,'0000-00-00') != '0000-00-00' " + 
+      "AND d.arv_drugs_stopped <= '#{end_date}') OR ((CASE WHEN COALESCE(p.expiry_date_for_last_arvs,'') != '' " + 
+      "AND COALESCE(d.last_visit_date,'0000-00-00') != '0000-00-00' THEN DATEDIFF(d.last_visit_date, p.expiry_date_for_last_arvs) " + 
+      "ELSE 0 END) >= 60 AND DATE(p.expiry_date_for_last_arvs) <= '#{end_date}')) AND (d.latest_state = 'On antiretrovirals' AND " + 
+      "d.latest_state_date <= '#{end_date}') AND COALESCE(d.latest_side_effects, '0000-00-00') != '0000-00-00' AND " + 
+      "d.latest_side_effects <= '#{end_date}'")
+  
+  row = rs.num_rows
+  
+  reply(row)
+end
+
+def missed_0_6(start_date=Time.now, end_date=Time.now, section=nil)
+  con = connect("development")
+  
+  rs = con.query("SELECT DISTINCT p.patient_id FROM patient_report p LEFT OUTER JOIN " + 
+      "patient_report_details d ON p.patient_id = d.patient_id WHERE COALESCE(p.art_start_date, " + 
+      "'0000-00-00') != '0000-00-00' AND COALESCE(p.registration_date, '0000-00-00') != '0000-00-00' " + 
+      "AND DATE(p.registration_date) <= '#{end_date}' AND not((d.latest_state = 'Patient died' " + 
+      "AND d.latest_state_date <= '#{end_date}') OR (d.latest_state = 'Patient transferred out' AND " + 
+      "d.latest_state_date <= '#{end_date}') OR (COALESCE(d.arv_drugs_stopped,'0000-00-00') != '0000-00-00' " + 
+      "AND d.arv_drugs_stopped <= '#{end_date}') OR ((CASE WHEN COALESCE(p.expiry_date_for_last_arvs,'') != '' " + 
+      "AND COALESCE(d.last_visit_date,'0000-00-00') != '0000-00-00' THEN DATEDIFF(d.last_visit_date, p.expiry_date_for_last_arvs) " + 
+      "ELSE 0 END) >= 60 AND DATE(p.expiry_date_for_last_arvs) <= '#{end_date}')) AND (d.latest_state = 'On antiretrovirals' AND " + 
+      "d.latest_state_date <= '#{end_date}') AND COALESCE(d.missed_drugs_count, 0) <= 6 AND " + 
+      "COALESCE(d.last_missed_drugs_date,'0000-00-00') <= '#{end_date}'")
+  
+  row = rs.num_rows
+  
+  reply(row)
+end
+
+def missed_7plus(start_date=Time.now, end_date=Time.now, section=nil)
+  con = connect("development")
+  
+  rs = con.query("SELECT DISTINCT p.patient_id FROM patient_report p LEFT OUTER JOIN " + 
+      "patient_report_details d ON p.patient_id = d.patient_id WHERE COALESCE(p.art_start_date, " + 
+      "'0000-00-00') != '0000-00-00' AND COALESCE(p.registration_date, '0000-00-00') != '0000-00-00' " + 
+      "AND DATE(p.registration_date) <= '#{end_date}' AND not((d.latest_state = 'Patient died' " + 
+      "AND d.latest_state_date <= '#{end_date}') OR (d.latest_state = 'Patient transferred out' AND " + 
+      "d.latest_state_date <= '#{end_date}') OR (COALESCE(d.arv_drugs_stopped,'0000-00-00') != '0000-00-00' " + 
+      "AND d.arv_drugs_stopped <= '#{end_date}') OR ((CASE WHEN COALESCE(p.expiry_date_for_last_arvs,'') != '' " + 
+      "AND COALESCE(d.last_visit_date,'0000-00-00') != '0000-00-00' THEN DATEDIFF(d.last_visit_date, p.expiry_date_for_last_arvs) " + 
+      "ELSE 0 END) >= 60 AND DATE(p.expiry_date_for_last_arvs) <= '#{end_date}')) AND (d.latest_state = 'On antiretrovirals' AND " + 
+      "d.latest_state_date <= '#{end_date}') AND COALESCE(d.missed_drugs_count, 0) >= 7 AND " + 
+      "COALESCE(d.last_missed_drugs_date,'0000-00-00') <= '#{end_date}'")
   
   row = rs.num_rows
   
@@ -1305,7 +1477,13 @@ if cgi.params["field"]
     current_site
   when "quarter"
     quarter(start_date, end_date, cgi.params["field"][0])
+  when "side_effects"
+    side_effects(start_date, end_date, cgi.params["field"][0])
+  when "missed_0_6"
+    missed_0_6(start_date, end_date, cgi.params["field"][0])
+  when "missed_7plus"
+    missed_7plus(start_date, end_date, cgi.params["field"][0])
   else
-    reply("")
+    reply(cgi.params["field"][0])
   end
 end
