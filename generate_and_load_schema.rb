@@ -22,7 +22,7 @@ rs.each_hash{|h| tables << h["Tables_in_" + db]}
 exception_tables = ["person", "person_address", "person_attribute", "person_name", 
   "person_name_code", "patient", "patient_identifier", "patient_program", "patient_state",
   "patient_state_on_arvs", "encounter", "obs", "orders", "drug_order", 
-  "regimen_observation"]
+  "regimen_observation, relationship"]
 
 tables = tables - exception_tables
 
