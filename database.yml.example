@@ -9,14 +9,14 @@ development:
   adapter: mysql
   database: test_bart
   username: root
-  password: 
+  password: admin
   host: localhost
 
 test: &TEST
   adapter: mysql
   database: bart2_test
   username: root
-  password: 
+  password: admin
   host: localhost
 
 cucumber:
@@ -26,13 +26,27 @@ migration_source:
   adapter: mysql
   database: test_buffer_bart
   username: root
-  password: 
+  password: admin
   host: localhost
 
 migration_destination:
   adapter: mysql
   database: test_bart
   username: root
-  password: 
+  password: admin
+  host: localhost
+
+bart1_migration_source:
+  adapter: mysql
+  database: stgabriel
+  username: root
+  password: admin
+  host: localhost
+
+bart2_migration_destination:
+  adapter: mysql
+  database: stgabriel_bart2_test
+  username: root
+  password: admin
   host: localhost
 
