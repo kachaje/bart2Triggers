@@ -22,6 +22,7 @@ fi
 
 # echo $PROCESSES
 
+mkdir log
 rm log/*
 
 USERNAME=`ruby -ryaml -e "puts YAML::load_file('database.yml')['development']['username']"`
