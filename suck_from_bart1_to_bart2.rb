@@ -88,7 +88,7 @@ if ARGV[0] == "true" || ARGV[0] == "1"
       p = dest_con.query("INSERT INTO person SELECT #{lastid}, NULL, NULL, NULL, NULL, NULL, " + 
           "NULL, `#{db}`.`users`.`creator`, `#{db}`.`users`.`date_created`, `#{db}`.`users`.`changed_by`, " + 
           "`#{db}`.`users`.`date_changed`, `#{db}`.`users`.`voided`, `#{db}`.`users`.`voided_by`, `#{db}`.`users`.`date_voided`, " + 
-          "`#{db}`.`users`.`void_reason`, (SELECT UUID()) FROM `stgabriel`.`users` WHERE `#{db}`.`users`.`user_id` = #{user["user_id"]}")
+          "`#{db}`.`users`.`void_reason`, (SELECT UUID()) FROM `#{db}`.`users` WHERE `#{db}`.`users`.`user_id` = #{user["user_id"]}")
     
       p = dest_con.query("INSERT INTO users_mapping VALUES(#{user["user_id"]}, #{lastid}, NULL, NULL)")
     rescue Mysql::Error => e
@@ -116,7 +116,7 @@ if ARGV[0] == "true" || ARGV[0] == "1"
           " `#{db}`.`users`.`date_created`, `#{db}`.`users`.`voided`, #{(user["voided_by"].to_i > 0 ? 
         user["voided_by"] : "NULL")}, `#{db}`.`users`.`date_voided`, `#{db}`.`users`.`void_reason`, " + 
           "#{(user["changed_by"].to_i > 0 ? (user["changed_by"]) : "NULL")}, `#{db}`.`users`.`date_changed`, " +         
-          "(SELECT UUID()) FROM `stgabriel`.`users` WHERE `#{db}`.`users`.`user_id` = (SELECT bart1_user_id FROM users_mapping WHERE " + 
+          "(SELECT UUID()) FROM `#{db}`.`users` WHERE `#{db}`.`users`.`user_id` = (SELECT bart1_user_id FROM users_mapping WHERE " + 
           "bart2_user_id = #{user["person_id"]})")
     
       p = dest_con.query("INSERT INTO users SELECT #{user["person_id"]}, NULL, `#{db}`.`users`.`username`, `#{db}`.`users`.`password`, " + 
@@ -410,10 +410,10 @@ people.each_hash do |person|
           "`#{db}`.`orders`.`date_created`), INTERVAL (SELECT `#{db}`.`drug_order`.`quantity` FROM `#{db}`.`drug_order` " + 
           " WHERE `#{db}`.`drug_order`.`order_id` = `#{db}`.`orders`.`order_id` LIMIT 1)/COALESCE(" + 
           "(SELECT `#{db}`.`patient_prescription_totals`.`daily_consumption` "  + 
-          " FROM `stgabriel`.`patient_prescription_totals` " + 
+          " FROM `#{db}`.`patient_prescription_totals` " + 
           "WHERE `#{db}`.`patient_prescription_totals`.`patient_id` = #{person["patient_id"]} AND " + 
-          "`#{db}`.`patient_prescription_totals`.`drug_id` = (SELECT `stgabriel`.`drug_order`.`drug_inventory_id` " + 
-          " FROM `stgabriel`.`drug_order` WHERE `stgabriel`.`drug_order`.`order_id` = `stgabriel`.`orders`.`order_id` LIMIT 1) AND " + 
+          "`#{db}`.`patient_prescription_totals`.`drug_id` = (SELECT `#{db}`.`drug_order`.`drug_inventory_id` " + 
+          " FROM `#{db}`.`drug_order` WHERE `#{db}`.`drug_order`.`order_id` = `#{db}`.`orders`.`order_id` LIMIT 1) AND " + 
           "`#{db}`.`patient_prescription_totals`.`prescription_date` = (SELECT DATE(`#{db}`.`encounter`.`encounter_datetime`) FROM " + 
           "`#{db}`.`encounter` WHERE `#{db}`.`encounter`.`encounter_id` = `#{db}`.`orders`.`encounter_id`)), 1)  DAY))), " + 
           "`#{db}`.`orders`.`discontinued`, `#{db}`.`orders`.`discontinued_date`, (SELECT `users_mapping`.`bart2_user_id` " + 
@@ -426,7 +426,7 @@ people.each_hash do |person|
           "#{person["patient_id"]}, NULL, NULL, (SELECT UUID()), NULL" + 
           " FROM `#{db}`.`orders` WHERE `#{db}`.`orders`.`encounter_id` IN (SELECT `#{db}`.`orders`.`encounter_id` " + 
           "FROM `#{db}`.`encounter` WHERE `#{db}`.`encounter`.`patient_id` =  #{person["patient_id"]} " + 
-          " AND `stgabriel`.`encounter`.`encounter_id` = `stgabriel`.`orders`.`encounter_id`)")
+          " AND `#{db}`.`encounter`.`encounter_id` = `#{db}`.`orders`.`encounter_id`)")
       
     rescue Mysql::Error => e
       puts "?? Error #{e.errno}: #{e.error}"
@@ -440,7 +440,7 @@ people.each_hash do |person|
       p = dest_con.query("INSERT INTO drug_order SELECT `#{db}`.`drug_order`.`order_id`, " + 
           "(SELECT new_drug_id FROM tmp_drug_stack WHERE drug_id = `#{db}`.`drug_order`.`drug_inventory_id`), " + 
           "`#{db}`.`drug_order`.`dose`, (SELECT `#{db}`.`patient_prescription_totals`.`daily_consumption` "  + 
-          " FROM `stgabriel`.`patient_prescription_totals` " + 
+          " FROM `#{db}`.`patient_prescription_totals` " + 
           "WHERE `#{db}`.`patient_prescription_totals`.`patient_id` = #{person["patient_id"]} AND " + 
           "`#{db}`.`patient_prescription_totals`.`drug_id` = `#{db}`.`drug_order`.`drug_inventory_id` AND " + 
           "`#{db}`.`patient_prescription_totals`.`prescription_date` = (SELECT DATE(`#{db}`.`encounter`.`encounter_datetime`) FROM " + 
