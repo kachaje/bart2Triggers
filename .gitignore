@@ -1,1 +1,5 @@
 database.yml
+concept_*
+drug_map.csv
+.~*
+log/
