@@ -156,6 +156,13 @@ people.each_hash do |person|
           "WHERE `#{db}`.`patient`.`patient_id` = #{person["patient_id"]} " + 
           " ON DUPLICATE KEY UPDATE person_id = #{person["patient_id"]}")  
 
+    rescue Mysql::Error => e
+      puts "?? Error #{e.errno}: #{e.error}"
+      
+      puts ":: Query: "
+    end
+    
+    begin
       print "# importing patient with id #{person["patient_id"]}\n"
       
       p = dest_con.query("INSERT INTO patient SELECT `#{db}`.`patient`.`patient_id`, `#{db}`.`patient`.`tribe`, " +
@@ -168,6 +175,14 @@ people.each_hash do |person|
           "FROM `#{db}`.`patient` WHERE `#{db}`.`patient`.`patient_id` = #{person["patient_id"]} " + 
           " ON DUPLICATE KEY UPDATE patient_id = #{person["patient_id"]}")  
       
+    rescue Mysql::Error => e
+      puts "?? Error #{e.errno}: #{e.error}"
+      
+      puts ":: Query: "
+    end
+    
+    begin
+      # Relationships have to be handled later
       print "# importing relationships for patient with id #{person["patient_id"]}\n"
       
       p = dest_con.query("INSERT INTO relationship SELECT `#{db}`.`relationship`.`relationship_id`, #{person["patient_id"]}, " + 
@@ -182,7 +197,14 @@ people.each_hash do |person|
           "(SELECT `#{db}`.`person`.`person_id` FROM `#{db}`.`person` WHERE `#{db}`.`person`.`patient_id` = " + 
           "#{person["patient_id"]} LIMIT 1) " + 
           " ON DUPLICATE KEY UPDATE person_a = #{person["patient_id"]}")
+
+    rescue Mysql::Error => e
+      puts "?? Error #{e.errno}: #{e.error}"
       
+      puts ":: Query: "
+    end
+    
+    begin
       print "# importing person_address for patient with id #{person["patient_id"]}\n"
       
       p = dest_con.query("INSERT INTO person_address SELECT `#{db}`.`patient_address`.`patient_address_id`, " + 
@@ -196,6 +218,13 @@ people.each_hash do |person|
           "`#{db}`.`patient_address`.`void_reason`, NULL, NULL, NULL, NULL, NULL, (SELECT UUID()) FROM `#{db}`.`patient_address` " + 
           " WHERE `#{db}`.`patient_address`.`patient_id` = #{person["patient_id"]}")
       
+    rescue Mysql::Error => e
+      puts "?? Error #{e.errno}: #{e.error}"
+      
+      puts ":: Query: "
+    end
+    
+    begin
       print "# importing person_name for patient with id #{person["patient_id"]}\n"
       
       p = dest_con.query("INSERT INTO person_name SELECT NULL, `#{db}`.`patient_name`.`preferred`, " + 
@@ -210,6 +239,13 @@ people.each_hash do |person|
           "`users_mapping`.`bart1_user_id` = `#{db}`.`patient_name`.`changed_by`), `#{db}`.`patient_name`.`date_changed`, (SELECT UUID())" + 
           "FROM `#{db}`.`patient_name` WHERE `#{db}`.`patient_name`.`patient_id` = #{person["patient_id"]}")
       
+    rescue Mysql::Error => e
+      puts "?? Error #{e.errno}: #{e.error}"
+      
+      puts ":: Query: "
+    end
+    
+    begin
       print "# importing person_identifiers for patient with id #{person["patient_id"]}\n"
       
       p = dest_con.query("INSERT INTO patient_identifier SELECT NULL, #{person["patient_id"]}, `#{db}`.`patient_identifier`.`identifier`, " + 
@@ -227,6 +263,13 @@ people.each_hash do |person|
           " `#{db}`.`patient_identifier_type` WHERE name IN ('Occupation', 'Cell phone number', 'Physical address', " + 
           "'Traditional authority', 'Home phone number', 'Office phone number'))")
     
+    rescue Mysql::Error => e
+      puts "?? Error #{e.errno}: #{e.error}"
+      
+      puts ":: Query: "
+    end
+    
+    begin
       print "# importing person_attributes for patient with id #{person["patient_id"]}\n"
       
       p = dest_con.query("INSERT INTO person_attribute SELECT NULL, #{person["patient_id"]}, `#{db}`.`patient_identifier`.`identifier`, " + 
@@ -244,6 +287,13 @@ people.each_hash do |person|
           " `#{db}`.`patient_identifier_type` WHERE name IN ('Occupation', 'Cell phone number', 'Physical address', " + 
           "'Traditional authority', 'Home phone number', 'Office phone number'))")
     
+    rescue Mysql::Error => e
+      puts "?? Error #{e.errno}: #{e.error}"
+      
+      puts ":: Query: "
+    end
+    
+    begin
       print "# importing person_programs for patient with id #{person["patient_id"]}\n"
       
       p = dest_con.query("INSERT INTO patient_program SELECT `#{db}`.`patient_program`.`patient_program_id`, " + 
@@ -258,6 +308,13 @@ people.each_hash do |person|
           " FROM `#{db}`.`patient_program` WHERE `#{db}`.`patient_program`.`patient_id` = #{person["patient_id"]} " + 
           " ON DUPLICATE KEY UPDATE patient_program_id = `#{db}`.`patient_program`.`patient_program_id`")    
       
+    rescue Mysql::Error => e
+      puts "?? Error #{e.errno}: #{e.error}"
+      
+      puts ":: Query: "
+    end
+    
+    begin
       print "# importing patient_states for patient with id #{person["patient_id"]}\n"
       
       p = dest_con.query("INSERT INTO patient_state SELECT NULL, (SELECT patient_program_id FROM patient_program WHERE " + 
@@ -272,6 +329,13 @@ people.each_hash do |person|
           " FROM `#{db}`.`patient_historical_regimens` WHERE `#{db}`.`patient_historical_regimens`.`patient_id` " + 
           "= #{person["patient_id"]}")
       
+    rescue Mysql::Error => e
+      puts "?? Error #{e.errno}: #{e.error}"
+      
+      puts ":: Query: "
+    end
+    
+    begin
       print "# importing encounters for patient with id #{person["patient_id"]}\n"
       
       p = dest_con.query("INSERT INTO encounter SELECT `#{db}`.`encounter`.`encounter_id`, " + 
@@ -295,6 +359,13 @@ people.each_hash do |person|
           "FROM `#{db}`.`encounter` WHERE `#{db}`.`encounter`.`patient_id` = #{person["patient_id"]} " + 
           " ON DUPLICATE KEY UPDATE encounter_id = `#{db}`.`encounter`.`encounter_id`")
       
+    rescue Mysql::Error => e
+      puts "?? Error #{e.errno}: #{e.error}"
+      
+      puts ":: Query: "
+    end
+    
+    begin
       print "# importing obs for patient with id #{person["patient_id"]}\n"
       
       p = dest_con.query("INSERT INTO obs SELECT NULL, #{person["patient_id"]}, COALESCE((SELECT new_concept_id " + 
@@ -322,6 +393,13 @@ people.each_hash do |person|
           "NULL, NULL, NULL, (SELECT UUID()) FROM `#{db}`.`patient_historical_regimens` WHERE " + 
           "`#{db}`.`patient_historical_regimens`.`patient_id` = #{person["patient_id"]}")
       
+    rescue Mysql::Error => e
+      puts "?? Error #{e.errno}: #{e.error}"
+      
+      puts ":: Query: "
+    end
+    
+    begin
       print "# importing orders for patient with id #{person["patient_id"]}\n"
       
       p = dest_con.query("INSERT INTO orders SELECT `#{db}`.`orders`.`order_id`, `#{db}`.`orders`.`order_type_id`, " + 
@@ -350,6 +428,13 @@ people.each_hash do |person|
           "FROM `#{db}`.`encounter` WHERE `#{db}`.`encounter`.`patient_id` =  #{person["patient_id"]} " + 
           " AND `stgabriel`.`encounter`.`encounter_id` = `stgabriel`.`orders`.`encounter_id`)")
       
+    rescue Mysql::Error => e
+      puts "?? Error #{e.errno}: #{e.error}"
+      
+      puts ":: Query: "
+    end
+    
+    begin
       print "# importing drug_orders for patient with id #{person["patient_id"]}\n"
       
       p = dest_con.query("INSERT INTO drug_order SELECT `#{db}`.`drug_order`.`order_id`, " + 
@@ -374,7 +459,7 @@ people.each_hash do |person|
     rescue Mysql::Error => e
       puts "?? Error #{e.errno}: #{e.error}"
       
-      puts ":: Query: " + "INSERT INTO obs_edit_audit (patient_id) VALUES (#{person["patient_id"]})"
+      puts ":: Query: "
     end
   }
   t.join
