@@ -6,7 +6,7 @@ FOR EACH ROW
 BEGIN
   /*SET @group = (select distinct concept_id from concept_name where concept_id in (select concept_id from concept_set where concept_set = (select concept_id from concept_name where name = "Arvs")));*/
 
-  IF new.quantity > 0 AND new.drug_inventory_id IN (SELECT drug_id FROM drug WHERE drug_id = new.drug_inventory_id AND concept_id IN (select distinct concept_id from concept_name where concept_id in (select concept_id from concept_set where concept_set = (select concept_id from concept_name where name = "Arvs")))) THEN 
+  IF new.quantity > 0 AND (new.drug_inventory_id IN (SELECT drug_id FROM drug WHERE drug_id = new.drug_inventory_id AND concept_id IN (select distinct concept_id from concept_name where concept_id in (select concept_id from concept_set where concept_set = (select concept_id from concept_name where name = "Arvs")))) OR ((SELECT  concept_id FROM drug WHERE drug_id = new.drug_inventory_id) IN (792,1610,1613,2988,7994,1612))) THEN 
      SET @auto_expiry = (SELECT auto_expire_date FROM orders WHERE order_id = new.order_id);
      SET @expiry = (SELECT DATE_ADD(@auto_expiry, INTERVAL (COALESCE(new.quantity, 0)/COALESCE(new.equivalent_daily_dose,1)) DAY));
 

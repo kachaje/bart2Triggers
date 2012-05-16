@@ -50,6 +50,13 @@ if ARGV[0] == "true" || ARGV[0] == "1"
   print "# loading schema/defaults.sql file\n"
   `mysql --host=#{dest_host} --user=#{dest_user} --password=#{dest_pass} #{dest_db} < schema/defaults.sql`
  
+  functions = Dir.glob("initializers/*")
+
+  functions.each do |file|  
+    print "# loading #{file} funtion file\n"
+    `mysql --host=#{host} --user=#{user} --password=#{pass} #{db} < #{file}`
+  end
+
   triggers = Dir.glob("schema/triggers/*")
 
   triggers.each do |file|  
@@ -137,6 +144,8 @@ end
 # GENERAL
 people = con.query("SELECT patient_id FROM patient LIMIT #{ARGV[1]}, #{ARGV[2]}") 
 
+p = dest_con.query("SET @@FOREIGN_KEY_CHECKS=0")  
+
 people.each_hash do |person|
   t = Thread.new {
     # Person table and associated fields
@@ -217,7 +226,7 @@ people.each_hash do |person|
           "`users_mapping`.`bart1_user_id` = `#{db}`.`patient_address`.`voided_by`), `#{db}`.`patient_address`.`date_voided`, " + 
           "`#{db}`.`patient_address`.`void_reason`, NULL, NULL, NULL, NULL, NULL, (SELECT UUID()) FROM `#{db}`.`patient_address` " + 
           " WHERE `#{db}`.`patient_address`.`patient_id` = #{person["patient_id"]} " + 
-          " ON DUPLICATE KEY UPDATE patient_address_id = `#{db}`.`patient_address`.`patient_address_id`")
+          " ON DUPLICATE KEY UPDATE person_address_id = `#{db}`.`patient_address`.`patient_address_id`")
       
     rescue Mysql::Error => e
       puts "?? Error #{e.errno}: #{e.error}"
@@ -324,16 +333,42 @@ people.each_hash do |person|
           "(SELECT concept_id FROM concept_name WHERE name = 'On antiretrovirals' LIMIT 1) " + 
           "AND program_workflow_id = (SELECT program_workflow_id FROM program_workflow WHERE program_id = " + 
           "(SELECT program_id FROM program WHERE concept_id = (SELECT concept_id FROM concept_name WHERE name = " + 
-          "'HIV PROGRAM' LIMIT 1)))), `#{db}`.`patient_historical_regimens`.`dispensed_date`, NULL, " + 
-          "(SELECT creator FROM encounter WHERE encounter_id = `#{db}`.`patient_historical_regimens`.`encounter_id`), " + 
-          "`#{db}`.`patient_historical_regimens`.`dispensed_date`, NULL, NULL, NULL, NULL, NULL, NULL, (SELECT UUID()) " + 
-          " FROM `#{db}`.`patient_historical_regimens` WHERE `#{db}`.`patient_historical_regimens`.`patient_id` " + 
-          "= #{person["patient_id"]}")
+          "'HIV PROGRAM' LIMIT 1)))), `#{db}`.`orders`.`date_created`, NULL, " + 
+          "(SELECT creator FROM encounter WHERE encounter_id = `#{db}`.`orders`.`encounter_id`), " + 
+          "`#{db}`.`orders`.`date_created`, NULL, NULL, NULL, NULL, NULL, NULL, (SELECT UUID()) " + 
+          " FROM `#{db}`.`orders` WHERE " + 
+          "`#{db}`.`orders`.`encounter_id` = (SELECT `#{db}`.`encounter`.`encounter_id` FROM `#{db}`.`encounter` " + 
+          " WHERE `#{db}`.`encounter`.`encounter_id` = `#{db}`.`encounter`.`encounter_id` AND "  + 
+          "`#{db}`.`encounter`.`patient_id` = #{person["patient_id"]} AND `#{db}`.`encounter`.`encounter_type` = " + 
+          "(SELECT encounter_type_id FROM `#{db}`.`encounter_type` WHERE `#{db}`.`encounter_type`.`name` = 'Give Drugs') " + 
+          " AND `#{db}`.`encounter`.`patient_id` IN (SELECT DISTINCT `#{db}`.`patient_program`.`patient_id` " + 
+          " FROM `#{db}`.`patient_program`) LIMIT 1) " + 
+          "AND COALESCE((`#{db}`.regimen_category(#{person["patient_id"]}, " + 
+          "(SELECT `#{db}`.`drug_order`.`drug_inventory_id` FROM `#{db}`.`drug_order` WHERE `#{db}`.`drug_order`.`order_id` = " + 
+          "`#{db}`.`orders`.`order_id` LIMIT 1), DATE(`#{db}`.`orders`.`date_created`))),'') != ''")
       
     rescue Mysql::Error => e
       puts "?? Error #{e.errno}: #{e.error}"
       
-      puts ":: Query: "
+      puts ":: Query: " + "INSERT INTO patient_state SELECT NULL, (SELECT patient_program_id FROM patient_program WHERE " + 
+          " patient_id = #{person["patient_id"]} ORDER BY date_created DESC LIMIT 1), " + 
+          "(SELECT program_workflow_state_id FROM program_workflow_state WHERE concept_id = " + 
+          "(SELECT concept_id FROM concept_name WHERE name = 'On antiretrovirals' LIMIT 1) " + 
+          "AND program_workflow_id = (SELECT program_workflow_id FROM program_workflow WHERE program_id = " + 
+          "(SELECT program_id FROM program WHERE concept_id = (SELECT concept_id FROM concept_name WHERE name = " + 
+          "'HIV PROGRAM' LIMIT 1)))), `#{db}`.`orders`.`date_created`, NULL, " + 
+          "(SELECT creator FROM encounter WHERE encounter_id = `#{db}`.`orders`.`encounter_id`), " + 
+          "`#{db}`.`orders`.`date_created`, NULL, NULL, NULL, NULL, NULL, NULL, (SELECT UUID()) " + 
+          " FROM `#{db}`.`orders` WHERE " + 
+          "`#{db}`.`orders`.`encounter_id` = (SELECT `#{db}`.`encounter`.`encounter_id` FROM `#{db}`.`encounter` " + 
+          " WHERE `#{db}`.`encounter`.`encounter_id` = `#{db}`.`encounter`.`encounter_id` AND "  + 
+          "`#{db}`.`encounter`.`patient_id` = #{person["patient_id"]} AND `#{db}`.`encounter`.`encounter_type` = " + 
+          "(SELECT encounter_type_id FROM `#{db}`.`encounter_type` WHERE `#{db}`.`encounter_type`.`name` = 'Give Drugs') " + 
+          " AND `#{db}`.`encounter`.`patient_id` IN (SELECT DISTINCT `#{db}`.`patient_program`.`patient_id` " + 
+          " FROM `#{db}`.`patient_program`) LIMIT 1) " + 
+          "AND COALESCE((`#{db}`.regimen_category(#{person["patient_id"]}, " + 
+          "(SELECT `#{db}`.`drug_order`.`drug_inventory_id` FROM `#{db}`.`drug_order` WHERE `#{db}`.`drug_order`.`order_id` = " + 
+          "`#{db}`.`orders`.`order_id` LIMIT 1), DATE(`#{db}`.`orders`.`date_created`))),'') != ''"
     end
     
     begin
@@ -343,7 +378,7 @@ people.each_hash do |person|
           "COALESCE((SELECT encounter_type_id FROM encounter_type WHERE name = " + 
           "(SELECT CASE `#{db}`.`encounter_type`.`name` WHEN 'HIV FIRST VISIT' THEN 'HIV CLINIC REGISTRATION' " + 
           "WHEN 'ART VISIT' THEN 'HIV CLINIC CONSULTATION'" +
-          "WHEN 'GIVE DRUGS' THEN 'TREATMENT'" +          
+          "WHEN 'GIVE DRUGS' THEN 'DISPENSING'" +          
           "WHEN 'DATE OF ART INITIATION' THEN 'ART ENROLLMENT'" +
           "WHEN 'HEIGHT/WEIGHT' THEN 'VITALS'" +
           "WHEN 'GENERAL RECEPTION' OR 'BARCODE SCAN' THEN 'REGISTRATION'" + 
@@ -369,35 +404,125 @@ people.each_hash do |person|
     begin
       print "# importing obs for patient with id #{person["patient_id"]}\n"
       
-      p = dest_con.query("INSERT INTO obs SELECT NULL, #{person["patient_id"]}, COALESCE((SELECT new_concept_id " + 
-          " FROM tmp_concepts_stack WHERE old_concept_id = `#{db}`.`obs`.`concept_id` LIMIT 1),NULL), " + 
-          "`#{db}`.`obs`.`encounter_id`, `#{db}`.`obs`.`order_id`, `#{db}`.`obs`.`obs_datetime`, `#{db}`.`obs`.`location_id`, " + 
-          "`#{db}`.`obs`.`obs_group_id`, `#{db}`.`obs`.`accession_number`, `#{db}`.`obs`.`value_group_id`, " + 
-          "`#{db}`.`obs`.`value_boolean`, COALESCE((SELECT new_concept_id FROM tmp_concepts_stack WHERE " + 
-          "old_concept_id = `#{db}`.`obs`.`value_coded` LIMIT 1),NULL), NULL, `#{db}`.`obs`.`value_drug`, " + 
+      p = dest_con.query("INSERT INTO obs SELECT `#{db}`.`obs`.`obs_id`, #{person["patient_id"]}, " + 
+          "(SELECT new_concept_id FROM tmp_concepts_stack WHERE old_concept_id = `#{db}`.`obs`.`concept_id` LIMIT 1), " + 
+          " `#{db}`.`obs`.`encounter_id`, `#{db}`.`obs`.`order_id`, " + 
+          "`#{db}`.`obs`.`obs_datetime`, `#{db}`.`obs`.`location_id`, `#{db}`.`obs`.`obs_group_id`, " + 
+          "`#{db}`.`obs`.`accession_number`, `#{db}`.`obs`.`value_group_id`, `#{db}`.`obs`.`value_boolean`, " + 
+          "(SELECT new_concept_id FROM tmp_concepts_stack WHERE old_concept_id = `#{db}`.`obs`.`value_coded` LIMIT 1), " + 
+          "NULL, `#{db}`.`obs`.`value_drug`, " + 
           "`#{db}`.`obs`.`value_datetime`, `#{db}`.`obs`.`value_numeric`, `#{db}`.`obs`.`value_modifier`, " + 
           "`#{db}`.`obs`.`value_text`, `#{db}`.`obs`.`date_started`, `#{db}`.`obs`.`date_stopped`, `#{db}`.`obs`.`comments`, " + 
-          "(SELECT `users_mapping`.`bart2_user_id` FROM `users_mapping` WHERE " + 
-          "`users_mapping`.`bart1_user_id` = `#{db}`.`obs`.`creator`), `#{db}`.`obs`.`date_created`, `#{db}`.`obs`.`voided`, " + 
-          "(SELECT `users_mapping`.`bart2_user_id` FROM `users_mapping` WHERE " + 
-          "`users_mapping`.`bart1_user_id` = `#{db}`.`obs`.`voided_by`), `#{db}`.`obs`.`date_voided`, `#{db}`.`obs`.`void_reason`, " + 
-          "NULL, (SELECT UUID()) " + 
-          " FROM `#{db}`.`obs` WHERE `#{db}`.`obs`.`patient_id` = #{person["patient_id"]}")
-      
-      p = dest_con.query("INSERT INTO obs SELECT NULL, #{person["patient_id"]}, (SELECT concept_id FROM concept_name WHERE name = " + 
-          "'Regimen category' LIMIT 1), `#{db}`.`patient_historical_regimens`.`encounter_id`, NULL, " + 
-          "`#{db}`.`patient_historical_regimens`.`dispensed_date`, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, " + 
-          "NULL, NULL, NULL, `#{db}`.`patient_historical_regimens`.`category`, NULL, NULL, NULL, " + 
           "(SELECT `users_mapping`.`bart2_user_id` FROM `users_mapping` WHERE `users_mapping`.`bart1_user_id` = " + 
-          "(SELECT creator FROM encounter WHERE encounter_id = " + 
-          "`#{db}`.`patient_historical_regimens`.`encounter_id`)), `#{db}`.`patient_historical_regimens`.`dispensed_date`, NULL, NULL, " + 
-          "NULL, NULL, NULL, (SELECT UUID()) FROM `#{db}`.`patient_historical_regimens` WHERE " + 
-          "`#{db}`.`patient_historical_regimens`.`patient_id` = #{person["patient_id"]}")
+          "`#{db}`.`obs`.`creator`), `#{db}`.`obs`.`date_created`, `#{db}`.`obs`.`voided`, " + 
+          " (SELECT `users_mapping`.`bart2_user_id` FROM `users_mapping` WHERE `users_mapping`.`bart1_user_id` = " + 
+          "`#{db}`.`obs`.`voided_by`), `#{db}`.`obs`.`date_voided`, `#{db}`.`obs`.`void_reason`, " + 
+          "NULL, (SELECT UUID()) " + 
+          "FROM `#{db}`.`obs` WHERE `#{db}`.`obs`.`patient_id` = #{person["patient_id"]}")
       
     rescue Mysql::Error => e
       puts "?? Error #{e.errno}: #{e.error}"
       
-      puts ":: Query: "
+      puts ":: Query: " + "INSERT INTO obs SELECT `#{db}`.`obs`.`obs_id`, #{person["patient_id"]}, " + 
+          "(SELECT new_concept_id FROM tmp_concepts_stack WHERE old_concept_id = `#{db}`.`obs`.`concept_id` LIMIT 1), " + 
+          " `#{db}`.`obs`.`encounter_id`, `#{db}`.`obs`.`order_id`, " + 
+          "`#{db}`.`obs`.`obs_datetime`, `#{db}`.`obs`.`location_id`, `#{db}`.`obs`.`obs_group_id`, " + 
+          "`#{db}`.`obs`.`accession_number`, `#{db}`.`obs`.`value_group_id`, `#{db}`.`obs`.`value_boolean`, " + 
+          "(SELECT new_concept_id FROM tmp_concepts_stack WHERE old_concept_id = `#{db}`.`obs`.`value_coded` LIMIT 1), " + 
+          "`#{db}`.`obs`.`value_coded_name_id`, `#{db}`.`obs`.`value_drug`, " + 
+          "`#{db}`.`obs`.`value_datetime`, `#{db}`.`obs`.`value_numeric`, `#{db}`.`obs`.`value_modifier`, " + 
+          "`#{db}`.`obs`.`value_text`, `#{db}`.`obs`.`date_started`, `#{db}`.`obs`.`date_stopped`, `#{db}`.`obs`.`comments`, " + 
+          "(SELECT `users_mapping`.`bart2_user_id` FROM `users_mapping` WHERE `users_mapping`.`bart1_user_id` = " + 
+          "`#{db}`.`obs`.`creator`), `#{db}`.`obs`.`date_created`, `#{db}`.`obs`.`voided`, " + 
+          " (SELECT `users_mapping`.`bart2_user_id` FROM `users_mapping` WHERE `users_mapping`.`bart1_user_id` = " + 
+          "`#{db}`.`obs`.`voided_by`), `#{db}`.`obs`.`date_voided`, `#{db}`.`obs`.`void_reason`, " + 
+          "`#{db}`.`obs`.`value_complex`, (SELECT UUID()) " + 
+          "FROM `#{db}`.`obs` WHERE `#{db}`.`obs`.`patient_id` = #{person["patient_id"]}"
+    end
+        
+    begin
+      print "# importing special obs cases for patient with id #{person["patient_id"]}\n"
+      
+      p = dest_con.query("INSERT INTO obs SELECT NULL, #{person["patient_id"]}, (SELECT concept_id FROM concept_name WHERE name = " + 
+          "'Regimen category' LIMIT 1), `#{db}`.`orders`.`encounter_id`, NULL, " + 
+          "`#{db}`.`orders`.`date_created`, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, " + 
+          "NULL, NULL, NULL, (`#{db}`.regimen_category(#{person["patient_id"]}, " + 
+          "(SELECT `#{db}`.`drug`.`concept_id` FROM `#{db}`.`drug` LEFT OUTER JOIN `#{db}`.`drug_order` ON `#{db}`.`drug`.`drug_id` = " + 
+          " `#{db}`.`drug_order`.`drug_inventory_id` WHERE `#{db}`.`drug_order`.`order_id` = " + 
+          "`#{db}`.`orders`.`order_id` LIMIT 1), DATE(`#{db}`.`orders`.`date_created`))), NULL, NULL, NULL, " + 
+          "(SELECT `users_mapping`.`bart2_user_id` FROM `users_mapping` WHERE `users_mapping`.`bart1_user_id` = " + 
+          "(SELECT creator FROM encounter WHERE encounter_id = " + 
+          "`#{db}`.`orders`.`encounter_id`)), `#{db}`.`orders`.`date_created`, NULL, NULL, " + 
+          "NULL, NULL, NULL, (SELECT UUID()) FROM `#{db}`.`orders` WHERE " + 
+          "`#{db}`.`orders`.`encounter_id` = (SELECT `#{db}`.`encounter`.`encounter_id` FROM `#{db}`.`encounter` " + 
+          " WHERE `#{db}`.`encounter`.`encounter_id` = `#{db}`.`encounter`.`encounter_id` AND "  + 
+          "`#{db}`.`encounter`.`patient_id` = #{person["patient_id"]} AND `#{db}`.`encounter`.`encounter_type` = " + 
+          "(SELECT encounter_type_id FROM `#{db}`.`encounter_type` WHERE `#{db}`.`encounter_type`.`name` = 'Give Drugs') " + 
+          " AND `#{db}`.`encounter`.`patient_id` IN (SELECT DISTINCT `#{db}`.`patient_program`.`patient_id` " + 
+          " FROM `#{db}`.`patient_program`) LIMIT 1) " + 
+          "AND COALESCE((`#{db}`.regimen_category(#{person["patient_id"]}, " + 
+          "(SELECT `#{db}`.`drug_order`.`drug_inventory_id` FROM `#{db}`.`drug_order` WHERE `#{db}`.`drug_order`.`order_id` = " + 
+          "`#{db}`.`orders`.`order_id` LIMIT 1), DATE(`#{db}`.`orders`.`date_created`))),'') != ''")
+      
+    rescue Mysql::Error => e
+      puts "?? Error #{e.errno}: #{e.error}"
+      
+      puts ":: Query: " + "INSERT INTO obs SELECT NULL, #{person["patient_id"]}, (SELECT concept_id FROM concept_name WHERE name = " + 
+          "'Regimen category' LIMIT 1), `#{db}`.`orders`.`encounter_id`, NULL, " + 
+          "`#{db}`.`orders`.`date_created`, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, " + 
+          "NULL, NULL, NULL, (`#{db}`.regimen_category(#{person["patient_id"]}, " + 
+          "(SELECT `#{db}`.`drug`.`concept_id` FROM `#{db}`.`drug` LEFT OUTER JOIN `#{db}`.`drug_order` ON `#{db}`.`drug`.`drug_id` = " + 
+          " `#{db}`.`drug_order`.`drug_inventory_id` WHERE `#{db}`.`drug_order`.`order_id` = " + 
+          "`#{db}`.`orders`.`order_id` LIMIT 1), DATE(`#{db}`.`orders`.`date_created`))), NULL, NULL, NULL, " + 
+          "(SELECT `users_mapping`.`bart2_user_id` FROM `users_mapping` WHERE `users_mapping`.`bart1_user_id` = " + 
+          "(SELECT creator FROM encounter WHERE encounter_id = " + 
+          "`#{db}`.`orders`.`encounter_id`)), `#{db}`.`orders`.`date_created`, NULL, NULL, " + 
+          "NULL, NULL, NULL, (SELECT UUID()) FROM `#{db}`.`orders` WHERE " + 
+          "`#{db}`.`orders`.`encounter_id` = (SELECT `#{db}`.`encounter`.`encounter_id` FROM `#{db}`.`encounter` " + 
+          " WHERE `#{db}`.`encounter`.`encounter_id` = `#{db}`.`encounter`.`encounter_id` AND "  + 
+          "`#{db}`.`encounter`.`patient_id` = #{person["patient_id"]} AND `#{db}`.`encounter`.`encounter_type` = " + 
+          "(SELECT encounter_type_id FROM `#{db}`.`encounter_type` WHERE `#{db}`.`encounter_type`.`name` = 'Give Drugs') LIMIT 1) " + 
+          "AND COALESCE((`#{db}`.regimen_category(#{person["patient_id"]}, " + 
+          "(SELECT `#{db}`.`drug_order`.`drug_inventory_id` FROM `#{db}`.`drug_order` WHERE `#{db}`.`drug_order`.`order_id` = " + 
+          "`#{db}`.`orders`.`order_id` LIMIT 1), DATE(`#{db}`.`orders`.`date_created`))),'') != ''"
+    end
+    
+    obs = dest_con.query("SELECT * FROM `obs` WHERE NOT `obs_id` IN (SELECT `obs_edit_audit`.`obs_id` FROM `obs_edit_audit` " + 
+        " WHERE `obs_edit_audit`.`obs_id` = `obs`.`obs_id`) AND concept_id = (SELECT concept_id FROM concept_name WHERE name = " + 
+        "'Antiretroviral treatment status') AND person_id = #{person["patient_id"]}") 
+
+    obs.each_hash do |ob|
+      t = Thread.new {
+    
+        begin
+      
+          print "# importing patient_states for patient with id #{ob["person_id"]}\n"
+      
+          p = dest_con.query("INSERT INTO patient_state SELECT NULL, (SELECT patient_program_id FROM patient_program WHERE " + 
+              " patient_id = person_id ORDER BY date_created DESC LIMIT 1), " + 
+              "COALESCE((SELECT program_workflow_state_id FROM program_workflow_state WHERE concept_id = value_coded " + 
+              " AND program_workflow_id = (SELECT program_workflow_id FROM program_workflow WHERE program_id = " + 
+              "(SELECT program_id FROM program WHERE concept_id = (SELECT concept_id FROM concept_name WHERE name = " + 
+              "'HIV PROGRAM' LIMIT 1)))), NULL), obs_datetime, NULL, creator, obs_datetime, NULL, NULL, NULL, NULL, " + 
+              "NULL, NULL, (SELECT UUID()) " + 
+              " FROM obs WHERE obs_id = #{ob["obs_id"]}")
+      
+          p = dest_con.query("INSERT INTO obs_edit_audit (obs_id) VALUES (#{ob["obs_id"]})")
+      
+        rescue Mysql::Error => e
+          puts "?? Error #{e.errno}: #{e.error}"
+      
+          puts "?? Query: " + "INSERT INTO patient_state SELECT NULL, (SELECT patient_program_id FROM patient_program WHERE " + 
+            " patient_id = person_id ORDER BY date_created DESC LIMIT 1), " + 
+            "COALESCE((SELECT program_workflow_state_id FROM program_workflow_state WHERE concept_id = value_coded " + 
+            " AND program_workflow_id = (SELECT program_workflow_id FROM program_workflow WHERE program_id = " + 
+            "(SELECT program_id FROM program WHERE concept_id = (SELECT concept_id FROM concept_name WHERE name = " + 
+            "'HIV PROGRAM' LIMIT 1)))), NULL), obs_datetime, NULL, creator, obs_datetime, NULL, NULL, NULL, NULL, " + 
+            "NULL, NULL, (SELECT UUID()) " + 
+            " FROM obs WHERE obs_id = #{ob["obs_id"]}"
+      
+        end
+      }
     end
     
     begin
@@ -463,12 +588,14 @@ people.each_hash do |person|
       
       puts ":: Query: "
     end
+    
   }
   t.join
 end
 
 p = dest_con.query("SET @@FOREIGN_KEY_CHECKS=1")
 
+=begin
 obs = dest_con.query("SELECT * FROM `obs` WHERE NOT `obs_id` IN (SELECT `obs_edit_audit`.`obs_id` FROM `obs_edit_audit` " + 
     " WHERE `obs_edit_audit`.`obs_id` = `obs`.`obs_id`) AND concept_id = (SELECT concept_id FROM concept_name WHERE name = " + 
     "'Antiretroviral treatment status')") 
@@ -495,15 +622,16 @@ obs.each_hash do |ob|
       puts "?? Error #{e.errno}: #{e.error}"
       
       puts "?? Query: " + "INSERT INTO patient_state SELECT NULL, (SELECT patient_program_id FROM patient_program WHERE " + 
-          " patient_id = person_id ORDER BY date_created DESC LIMIT 1), " + 
-          "COALESCE((SELECT program_workflow_state_id FROM program_workflow_state WHERE concept_id = value_coded " + 
-          " AND program_workflow_id = (SELECT program_workflow_id FROM program_workflow WHERE program_id = " + 
-          "(SELECT program_id FROM program WHERE concept_id = (SELECT concept_id FROM concept_name WHERE name = " + 
-          "'HIV PROGRAM' LIMIT 1)))), NULL), obs_datetime, NULL, creator, obs_datetime, NULL, NULL, NULL, NULL, " + 
-          "NULL, NULL, (SELECT UUID()) " + 
-          " FROM obs WHERE obs_id = #{ob["obs_id"]}"
+        " patient_id = person_id ORDER BY date_created DESC LIMIT 1), " + 
+        "COALESCE((SELECT program_workflow_state_id FROM program_workflow_state WHERE concept_id = value_coded " + 
+        " AND program_workflow_id = (SELECT program_workflow_id FROM program_workflow WHERE program_id = " + 
+        "(SELECT program_id FROM program WHERE concept_id = (SELECT concept_id FROM concept_name WHERE name = " + 
+        "'HIV PROGRAM' LIMIT 1)))), NULL), obs_datetime, NULL, creator, obs_datetime, NULL, NULL, NULL, NULL, " + 
+        "NULL, NULL, (SELECT UUID()) " + 
+        " FROM obs WHERE obs_id = #{ob["obs_id"]}"
       
     end
   }
 end
+=end
 
