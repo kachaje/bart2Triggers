@@ -216,7 +216,8 @@ people.each_hash do |person|
           "`#{db}`.`patient_address`.`voided`, (SELECT `users_mapping`.`bart2_user_id` FROM `users_mapping` WHERE " + 
           "`users_mapping`.`bart1_user_id` = `#{db}`.`patient_address`.`voided_by`), `#{db}`.`patient_address`.`date_voided`, " + 
           "`#{db}`.`patient_address`.`void_reason`, NULL, NULL, NULL, NULL, NULL, (SELECT UUID()) FROM `#{db}`.`patient_address` " + 
-          " WHERE `#{db}`.`patient_address`.`patient_id` = #{person["patient_id"]}")
+          " WHERE `#{db}`.`patient_address`.`patient_id` = #{person["patient_id"]} " + 
+          " ON DUPLICATE KEY UPDATE patient_address_id = `#{db}`.`patient_address`.`patient_address_id`")
       
     rescue Mysql::Error => e
       puts "?? Error #{e.errno}: #{e.error}"
@@ -426,7 +427,8 @@ people.each_hash do |person|
           "#{person["patient_id"]}, NULL, NULL, (SELECT UUID()), NULL" + 
           " FROM `#{db}`.`orders` WHERE `#{db}`.`orders`.`encounter_id` IN (SELECT `#{db}`.`orders`.`encounter_id` " + 
           "FROM `#{db}`.`encounter` WHERE `#{db}`.`encounter`.`patient_id` =  #{person["patient_id"]} " + 
-          " AND `#{db}`.`encounter`.`encounter_id` = `#{db}`.`orders`.`encounter_id`)")
+          " AND `#{db}`.`encounter`.`encounter_id` = `#{db}`.`orders`.`encounter_id`) " + 
+          " ON DUPLICATE KEY UPDATE order_id = `#{db}`.`orders`.`order_id`")
       
     rescue Mysql::Error => e
       puts "?? Error #{e.errno}: #{e.error}"
