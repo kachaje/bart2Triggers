@@ -58,7 +58,7 @@ BEGIN
   END IF; 
 
   /* KS */
-  IF (new.concept_id = (SELECT concept_id FROM concept_name WHERE name = "Karposi's sarcoma") AND new.value_coded IN (SELECT concept_id FROM concept_name WHERE name = "YES")) OR (new.value_coded IN (SELECT concept_id FROM concept_name WHERE name = "Karposi's sarcoma")) THEN		  	  
+  IF (new.concept_id = (SELECT concept_id FROM concept_name WHERE name = "Karposi's sarcoma" OR name = "Kaposis sarcoma" LIMIT 1) AND new.value_coded IN (SELECT concept_id FROM concept_name WHERE name = "YES" LIMIT 1)) OR (new.value_coded IN (SELECT concept_id FROM concept_name WHERE name = "Karposi's sarcoma" OR name = "Kaposis sarcoma" LIMIT 1)) THEN		  	  
 	UPDATE patient_report SET karposis_sarcoma = new.obs_datetime WHERE patient_id = new.person_id;
 	
 	     IF  @report_id != "" THEN
