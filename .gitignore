@@ -3,3 +3,4 @@ concept_*
 drug_map.csv
 .~*
 log/
+test.sql
