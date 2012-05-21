@@ -66,6 +66,8 @@ dest_con = Mysql.connect(dest_host, dest_user, dest_pass, dest_db)
 
 people = con.query("SELECT person_id FROM person") 
 
+p = dest_con.query("START TRANSACTION")  
+
 people.each_hash do |person|
   t = Thread.new {
     # Person table and associated fields
@@ -200,3 +202,5 @@ people.each_hash do |person|
   }
   t.join
 end
+
+p = dest_con.query("COMMIT")  

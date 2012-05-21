@@ -100,7 +100,7 @@ BEGIN
      END IF;
 
   /* MISSED DOSES */
-  IF (new.concept_id = (SELECT concept_id FROM concept_name WHERE name = "Missed antiretroviral drug construct" LIMIT 0,1)) AND (SELECT name FROM encounter_type WHERE encounter_type_id = (SELECT encounter_type FROM encounter WHERE encounter_id = new.encounter_id)) = "ART ADHERENCE" THEN
+  IF (new.concept_id = (SELECT concept_id FROM concept_name WHERE name = "Missed antiretroviral drug construct" LIMIT 0,1)) AND ((SELECT name FROM encounter_type WHERE encounter_type_id = (SELECT encounter_type FROM encounter WHERE encounter_id = new.encounter_id)) = "ART ADHERENCE" OR ((SELECT name FROM encounter_type WHERE encounter_type_id = (SELECT encounter_type FROM encounter WHERE encounter_id = new.encounter_id)) = "HIV CLINIC CONSULTATION")) THEN
 	UPDATE patient_report SET missed_drugs_count = new.value_numeric, last_missed_drugs_date = new.obs_datetime WHERE patient_id = new.person_id;
 	
 	     IF  @report_id != "" THEN

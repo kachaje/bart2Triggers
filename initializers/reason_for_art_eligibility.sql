@@ -42,25 +42,27 @@ DECLARE birthdate_estimated INT;
 DECLARE date_created VARCHAR(10); 
 DECLARE checkrange INT;
 
+SET yes_concept = (SELECT concept_id FROM concept WHERE name = "Yes" LIMIT 1);
 SET low_cd4_count_250 = COALESCE((SELECT COUNT(*) FROM obs WHERE patient_id = pat_id AND value_numeric <= 250 AND 
         concept_id = (SELECT concept_id FROM concept WHERE name = "CD4 count" limit 1) AND (concept_id = 
-        (SELECT concept_id FROM concept WHERE name = "CD4 < 250") OR value_coded = (yes_concept)) AND voided = 0),0);
+        (SELECT concept_id FROM concept WHERE name = "CD4 < 250") OR value_coded = 
+		(SELECT concept_id FROM concept WHERE name = "Yes" LIMIT 1)) AND voided = 0),0);
 
 SET low_cd4_count_350 = COALESCE((SELECT COUNT(*) FROM obs WHERE patient_id = pat_id AND value_numeric <= 350 AND 
         concept_id = (SELECT concept_id FROM concept WHERE name = "CD4 count" limit 1) AND (concept_id = 
-        (SELECT concept_id FROM concept WHERE name = "CD4 < 350") OR value_coded = (yes_concept)) AND voided = 0),0);
+        (SELECT concept_id FROM concept WHERE name = "CD4 < 350") OR value_coded = 
+		(SELECT concept_id FROM concept WHERE name = "Yes" LIMIT 1)) AND voided = 0),0);
 
 SET pregnant_woman = 0;
 SET breastfeeding_woman = 0;
 
-SET first_hiv_enc_date = COALESCE((SELECT DATE(encounter_datetime) FROM encounter WHERE encounter_type = 
+SET first_hiv_enc_date = COALESCE((SELECT DATE(encounter_datetime) FROM encounter WHERE patient_id = pat_id AND encounter_type = 
     (SELECT encounter_type_id FROM encounter_type WHERE name = "HIV Staging" LIMIT 1) 
         ORDER BY encounter_datetime ASC LIMIT 1),"2010-01-01");
 
 SET whostage = who_stage(pat_id, first_hiv_enc_date);
 
 SET sex = (SELECT gender FROM patient WHERE patient_id = pat_id LIMIT 1);
-SET yes_concept = (SELECT concept_id FROM concept WHERE name = "Yes" LIMIT 1);
 
 SET birthdate = (SELECT LEFT(p.birthdate,10) FROM patient p WHERE p.patient_id = pat_id);
 SET birthdate_estimated = (SELECT p.birthdate_estimated FROM patient p WHERE p.patient_id = pat_id);

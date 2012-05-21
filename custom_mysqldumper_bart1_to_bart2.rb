@@ -63,9 +63,9 @@ source_tables = {
     "voided_by", "date_voided", "void_reason", "uuid"]
 }
 
-# "Original table" => ["select table", "condition", "target substitute"]
+# "Original table" => ["select table", "condition", "target substitute", "ON DUPLICATE UPDATE primary_key_field"]
 display_substitute = {
-  "person"=>["patient","","person"],
+  "person"=>["patient","","person", "person_id", " ON DUPLICATE KEY UPDATE "],
   
   "patient_name"=> ["patient_name","","person_name"],
   
@@ -80,13 +80,13 @@ display_substitute = {
   "patient_state2"=>["drug_order","WHERE drug_order.drug_inventory_id IN (SELECT drug_id FROM drug WHERE " + 
       "concept_id IN (450, 451, 452, 458, 826, 827, 828, 829, 453))", "patient_state"],
   
-  "encounter"=>["encounter","","encounter"],
+  "encounter"=>["encounter","","encounter", "encounter_id", " ON DUPLICATE KEY UPDATE "],
   
   "obs"=>["obs","","obs"],
   
   "orders"=>["orders","","orders"],
   
-  "drug_order"=>["drug_order","","drug_order"],
+  "drug_order"=>["drug_order","","drug_order", "order_id", " ON DUPLICATE KEY UPDATE "],
   
   "relationship"=>["relationship","","relationship"]
 }
@@ -114,7 +114,7 @@ sort_weight_tables.each do |table|
   fields = source_tables[table]
   
   begin
-    ds = con.query("SELECT * FROM #{display_substitute[table][0]} #{display_substitute[table][1]}")
+    ds = con.query("SELECT * FROM #{display_substitute[table][0]} #{display_substitute[table][1]} LIMIT 7000, 60")
   
   rescue Mysql::Error => e
     puts "?? Error #{e.errno}: #{e.error}"
@@ -128,6 +128,8 @@ sort_weight_tables.each do |table|
   
   ds.each_hash do |row|
     next if fields.nil?
+    
+    primary_key = ""
     
     i = 0
     insert = insert + "("
@@ -300,9 +302,12 @@ sort_weight_tables.each do |table|
           puts "?? Error #{e.errno}: #{e.error}"
       
           puts ":: Query: " + "SELECT `users_mapping`.`bart2_user_id` user_id FROM " + 
-              "`users_mapping` WHERE `users_mapping`.`bart1_user_id` = " + 
-              "#{row[element]}"
+            "`users_mapping` WHERE `users_mapping`.`bart1_user_id` = " + 
+            "#{row[element]}"
         end   
+      elsif element == "order_id" && table == "drug_order"
+        primary_key = "'" + row[element] + "'"
+        row[element] = "'" + row[element] + "'"
       else
         row[element] = "'" + row[element] + "'"
       end
@@ -313,7 +318,7 @@ sort_weight_tables.each do |table|
     
     
     if r >= 100 
-      insert = insert + ");\n\n"
+      insert = insert + ( ");\n\n")
       
       puts insert
       
@@ -321,7 +326,7 @@ sort_weight_tables.each do |table|
       
       r = 0
     else
-      insert = insert + ")" + (r < ds.num_rows - 1 ? ", " : "")
+      insert = insert +  (")") + (r < ds.num_rows - 1 ? ", " : "")
       r = r + 1
     end
   end

@@ -1132,7 +1132,7 @@ def non_std(start_date=Time.now, end_date=Time.now, section=nil)
       "AND d.arv_drugs_stopped <= '#{end_date}') OR ((CASE WHEN COALESCE(p.expiry_date_for_last_arvs,'') != '' " + 
       "AND COALESCE(d.last_visit_date,'0000-00-00') != '0000-00-00' THEN DATEDIFF(d.last_visit_date, p.expiry_date_for_last_arvs) " + 
       "ELSE 0 END) >= 60 AND DATE(p.expiry_date_for_last_arvs) <= '#{end_date}')) AND (d.latest_state = 'On antiretrovirals' AND " + 
-      "d.latest_state_date <= '#{end_date}') AND (COALESCE(d.latest_regimen,'') = '')")
+      "d.latest_state_date <= '#{end_date}') AND (COALESCE(d.latest_regimen,'Nn') = 'Nn')")
   
   row = rs.num_rows
   

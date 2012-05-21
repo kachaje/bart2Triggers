@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "mysql"
 require "yaml"
+require "logger"
 
 # Require a user to input 3 parameters:
 #   1: true/false ::if this is the first call, true else false
@@ -15,6 +16,8 @@ if ARGV.length < 3
     "[arg4]\t: optional log file\n\n"
   exit
 end
+
+log = Logger.new('log/log.txt')
 
 host = YAML::load_file('database.yml')['bart1_migration_source']['host']
 user = YAML::load_file('database.yml')['bart1_migration_source']['username']
@@ -88,6 +91,8 @@ if ARGV[0] == "true" || ARGV[0] == "1"
 
   p = dest_con.query("SET @@FOREIGN_KEY_CHECKS=0")  
 
+  p = dest_con.query("START TRANSACTION")  
+
   users.each_hash do |user|
     print "# importing user with id #{user["user_id"]} to #{lastid}\n"
   
@@ -138,6 +143,8 @@ if ARGV[0] == "true" || ARGV[0] == "1"
     
     end
   end
+  
+  p = dest_con.query("COMMIT")  
 
 end
 
@@ -146,7 +153,20 @@ people = con.query("SELECT patient_id FROM patient LIMIT #{ARGV[1]}, #{ARGV[2]}"
 
 p = dest_con.query("SET @@FOREIGN_KEY_CHECKS=0")  
 
+starttime = Time.now
+
+log.debug "Actual patient stuff started at: #{starttime}"
+
+pos = 0
 people.each_hash do |person|
+  
+  p = dest_con.query("START TRANSACTION")  
+
+  pos = pos + 1  
+  puts ""
+  puts "<--------------------------------  #{pos} of #{ARGV[2]} : Started at #{starttime} -------------------------------------->" 
+  puts ""
+  
   t = Thread.new {
     # Person table and associated fields
     print "# importing person with id #{person["patient_id"]}\n"
@@ -184,6 +204,8 @@ people.each_hash do |person|
           "FROM `#{db}`.`patient` WHERE `#{db}`.`patient`.`patient_id` = #{person["patient_id"]} " + 
           " ON DUPLICATE KEY UPDATE patient_id = #{person["patient_id"]}")  
       
+      log.debug "Failed patient: #{person["patient_id"]}"
+      
     rescue Mysql::Error => e
       puts "?? Error #{e.errno}: #{e.error}"
       
@@ -210,7 +232,10 @@ people.each_hash do |person|
     rescue Mysql::Error => e
       puts "?? Error #{e.errno}: #{e.error}"
       
-      puts ":: Query: "
+      puts ":: Query: " 
+      
+      log.debug "Failed patient: #{person["patient_id"]}"
+      
     end
     
     begin
@@ -231,7 +256,10 @@ people.each_hash do |person|
     rescue Mysql::Error => e
       puts "?? Error #{e.errno}: #{e.error}"
       
-      puts ":: Query: "
+      puts ":: Query: " 
+      
+      log.debug "Failed patient: #{person["patient_id"]}"
+      
     end
     
     begin
@@ -252,7 +280,10 @@ people.each_hash do |person|
     rescue Mysql::Error => e
       puts "?? Error #{e.errno}: #{e.error}"
       
-      puts ":: Query: "
+      puts ":: Query: " 
+      
+      log.debug "Failed patient: #{person["patient_id"]}"
+      
     end
     
     begin
@@ -276,7 +307,10 @@ people.each_hash do |person|
     rescue Mysql::Error => e
       puts "?? Error #{e.errno}: #{e.error}"
       
-      puts ":: Query: "
+      puts ":: Query: " 
+      
+      log.debug "Failed patient: #{person["patient_id"]}"
+      
     end
     
     begin
@@ -300,7 +334,10 @@ people.each_hash do |person|
     rescue Mysql::Error => e
       puts "?? Error #{e.errno}: #{e.error}"
       
-      puts ":: Query: "
+      puts ":: Query: " 
+      
+      log.debug "Failed patient: #{person["patient_id"]}"
+      
     end
     
     begin
@@ -321,7 +358,10 @@ people.each_hash do |person|
     rescue Mysql::Error => e
       puts "?? Error #{e.errno}: #{e.error}"
       
-      puts ":: Query: "
+      puts ":: Query: " 
+      
+      log.debug "Failed patient: #{person["patient_id"]}"
+      
     end
     
     begin
@@ -368,7 +408,10 @@ people.each_hash do |person|
         " FROM `#{db}`.`patient_program`) LIMIT 1) " + 
         "AND COALESCE((`#{db}`.regimen_category(#{person["patient_id"]}, " + 
         "(SELECT `#{db}`.`drug_order`.`drug_inventory_id` FROM `#{db}`.`drug_order` WHERE `#{db}`.`drug_order`.`order_id` = " + 
-        "`#{db}`.`orders`.`order_id` LIMIT 1), DATE(`#{db}`.`orders`.`date_created`))),'') != ''"
+        "`#{db}`.`orders`.`order_id` LIMIT 1), DATE(`#{db}`.`orders`.`date_created`))),'') != ''" 
+      
+      log.debug "Failed patient: #{person["patient_id"]}"
+      
     end
     
     begin
@@ -398,19 +441,33 @@ people.each_hash do |person|
     rescue Mysql::Error => e
       puts "?? Error #{e.errno}: #{e.error}"
       
-      puts ":: Query: "
+      puts ":: Query: " 
+      
+      log.debug "Failed patient: #{person["patient_id"]}"
+      
     end
     
     begin      
       print "# importing obs for patient with id #{person["patient_id"]}\n"
       
       pp = dest_con.query("INSERT INTO obs SELECT `#{db}`.`obs`.`obs_id` obs_id, #{person["patient_id"]} patient_id, " + 
-          "(SELECT new_concept_id FROM tmp_concepts_stack WHERE old_concept_id = `#{db}`.`obs`.`concept_id` LIMIT 1) concept_id, " + 
+          "(CASE WHEN `#{db}`.`obs`.`concept_id` IN (SELECT old_concept_id FROM tmp_concepts_stack t WHERE old_concept_id = `#{db}`.`obs`.`concept_id` AND " + 
+          " old_concept_name IN ('Peripheral neuropathy',  'Leg pain / numbness', 'Hepatitis',  'Jaundice', 'Skin rash', 'Lipodystrophy', " + 
+          " 'Lactic acidosis', 'Anaemia', 'Other symptom', 'Other side effect')) AND `#{db}`.`obs`.`value_coded` IN " + 
+          "(SELECT old_concept_id FROM tmp_concepts_stack t where old_concept_name IN ('Yes', 'Yes drug induced', " + 
+          " 'Yes not drug induced', 'Yes unknown cause')) THEN (SELECT concept_id FROM concept_name " + 
+          "WHERE name = 'DRUG INDUCED') ELSE " + 
+          "(SELECT new_concept_id FROM tmp_concepts_stack WHERE old_concept_id = `#{db}`.`obs`.`concept_id` LIMIT 1) END) concept_id, " + 
           " `#{db}`.`obs`.`encounter_id` encounter_id, `#{db}`.`obs`.`order_id` order_id, " + 
           "`#{db}`.`obs`.`obs_datetime` obs_datetime, `#{db}`.`obs`.`location_id` location_id, " + 
           "`#{db}`.`obs`.`obs_group_id` obs_group_id, `#{db}`.`obs`.`accession_number` accession_number, " + 
           "`#{db}`.`obs`.`value_group_id` value_group_id, `#{db}`.`obs`.`value_boolean` value_boolean, " + 
-          "(SELECT new_concept_id FROM tmp_concepts_stack WHERE old_concept_id = `#{db}`.`obs`.`value_coded` LIMIT 1) value_coded, " + 
+          "(CASE WHEN `#{db}`.`obs`.`concept_id` IN (SELECT old_concept_id FROM tmp_concepts_stack t WHERE old_concept_id = `#{db}`.`obs`.`concept_id` AND " + 
+          " old_concept_name IN ('Peripheral neuropathy',  'Leg pain / numbness', 'Hepatitis',  'Jaundice', 'Skin rash', 'Lipodystrophy', " + 
+          " 'Lactic acidosis', 'Anaemia', 'Other symptom', 'Other side effect')) AND `#{db}`.`obs`.`value_coded` IN " + 
+          "(SELECT old_concept_id FROM tmp_concepts_stack t where old_concept_name IN ('Yes', 'Yes drug induced', " + 
+          " 'Yes not drug induced', 'Yes unknown cause')) THEN `#{db}`.`obs`.`concept_id` ELSE " + 
+          "(SELECT new_concept_id FROM tmp_concepts_stack WHERE old_concept_id = `#{db}`.`obs`.`value_coded` LIMIT 1) END) value_coded, " + 
           "NULL, `#{db}`.`obs`.`value_drug` value_drug, " + 
           "`#{db}`.`obs`.`value_datetime` value_datetime, `#{db}`.`obs`.`value_numeric` value_numeric, " + 
           "`#{db}`.`obs`.`value_modifier` value_modifier, `#{db}`.`obs`.`value_text` value_text, " + 
@@ -425,7 +482,33 @@ people.each_hash do |person|
     rescue Mysql::Error => e
       puts "?? Error #{e.errno}: #{e.error}"
       
-      puts ":: Query: "
+      puts ":: Query: " + "INSERT INTO obs SELECT `#{db}`.`obs`.`obs_id` obs_id, #{person["patient_id"]} patient_id, " + 
+        "(CASE WHEN `#{db}`.`obs`.`concept_id` IN (SELECT old_concept_id FROM tmp_concepts_stack t WHERE old_concept_id = `#{db}`.`obs`.`concept_id` AND " + 
+        " old_concept_name IN ('Peripheral neuropathy',  'Leg pain / numbness', 'Hepatitis',  'Jaundice', 'Skin rash', 'Lipodystrophy', " + 
+        " 'Lactic acidosis', 'Anaemia', 'Other symptom', 'Other side effect')) THEN (SELECT concept_id FROM concept_name " + 
+        "WHERE name = 'DRUG INDUCED') ELSE " + 
+        "(SELECT new_concept_id FROM tmp_concepts_stack WHERE old_concept_id = `#{db}`.`obs`.`concept_id` LIMIT 1) END) concept_id, " + 
+        " `#{db}`.`obs`.`encounter_id` encounter_id, `#{db}`.`obs`.`order_id` order_id, " + 
+        "`#{db}`.`obs`.`obs_datetime` obs_datetime, `#{db}`.`obs`.`location_id` location_id, " + 
+        "`#{db}`.`obs`.`obs_group_id` obs_group_id, `#{db}`.`obs`.`accession_number` accession_number, " + 
+        "`#{db}`.`obs`.`value_group_id` value_group_id, `#{db}`.`obs`.`value_boolean` value_boolean, " + 
+        "(CASE WHEN `#{db}`.`obs`.`concept_id` IN (SELECT old_concept_id FROM tmp_concepts_stack t WHERE old_concept_id = `#{db}`.`obs`.`concept_id` AND " + 
+        " old_concept_name IN ('Peripheral neuropathy',  'Leg pain / numbness', 'Hepatitis',  'Jaundice', 'Skin rash', 'Lipodystrophy', " + 
+        " 'Lactic acidosis', 'Anaemia', 'Other symptom', 'Other side effect')) THEN `#{db}`.`obs`.`concept_id` ELSE " + 
+        "(SELECT new_concept_id FROM tmp_concepts_stack WHERE old_concept_id = `#{db}`.`obs`.`value_coded` LIMIT 1) END) value_coded, " + 
+        "NULL, `#{db}`.`obs`.`value_drug` value_drug, " + 
+        "`#{db}`.`obs`.`value_datetime` value_datetime, `#{db}`.`obs`.`value_numeric` value_numeric, " + 
+        "`#{db}`.`obs`.`value_modifier` value_modifier, `#{db}`.`obs`.`value_text` value_text, " + 
+        "`#{db}`.`obs`.`date_started` date_started, `#{db}`.`obs`.`date_stopped` date_stopped, `#{db}`.`obs`.`comments` comments, " + 
+        "(SELECT `users_mapping`.`bart2_user_id` FROM `users_mapping` WHERE `users_mapping`.`bart1_user_id` = " + 
+        "`#{db}`.`obs`.`creator`) creator, `#{db}`.`obs`.`date_created` date_created, `#{db}`.`obs`.`voided` voided, " + 
+        " (SELECT `users_mapping`.`bart2_user_id` FROM `users_mapping` WHERE `users_mapping`.`bart1_user_id` = " + 
+        "`#{db}`.`obs`.`voided_by`) voided_by, `#{db}`.`obs`.`date_voided` date_voided, `#{db}`.`obs`.`void_reason` void_reason, " + 
+        "NULL, (SELECT UUID()) uuid " + 
+        "FROM `#{db}`.`obs` WHERE `#{db}`.`obs`.`patient_id` = #{person["patient_id"]} " 
+      
+      log.debug "Failed patient: #{person["patient_id"]}"
+      
     end
 
     begin
@@ -475,7 +558,10 @@ people.each_hash do |person|
         " NULL, NULL, NULL, NULL, (SELECT UUID()) " + 
         "FROM `#{db}`.`encounter` WHERE `#{db}`.`encounter`.`patient_id` = #{person["patient_id"]} AND " + 
         "`#{db}`.`encounter`.`encounter_type` = (SELECT `#{db}`.`encounter_type`.`encounter_type_id` FROM " + 
-        "`#{db}`.`encounter_type` WHERE `#{db}`.`encounter_type`.`name` = 'HIV Staging' LIMIT 1) LIMIT 1"
+        "`#{db}`.`encounter_type` WHERE `#{db}`.`encounter_type`.`name` = 'HIV Staging' LIMIT 1) LIMIT 1" 
+      
+      log.debug "Failed patient: #{person["patient_id"]}"
+      
     end
     
     begin
@@ -522,7 +608,10 @@ people.each_hash do |person|
         "(SELECT encounter_type_id FROM `#{db}`.`encounter_type` WHERE `#{db}`.`encounter_type`.`name` = 'Give Drugs') LIMIT 1) " + 
         "AND COALESCE((`#{db}`.regimen_category(#{person["patient_id"]}, " + 
         "(SELECT `#{db}`.`drug_order`.`drug_inventory_id` FROM `#{db}`.`drug_order` WHERE `#{db}`.`drug_order`.`order_id` = " + 
-        "`#{db}`.`orders`.`order_id` LIMIT 1), DATE(`#{db}`.`orders`.`date_created`))),'') != ''"
+        "`#{db}`.`orders`.`order_id` LIMIT 1), DATE(`#{db}`.`orders`.`date_created`))),'') != ''" 
+      
+      log.debug "Failed patient: #{person["patient_id"]}"
+      
     end
     
     obs = dest_con.query("SELECT * FROM `obs` WHERE NOT `obs_id` IN (SELECT `obs_edit_audit`.`obs_id` FROM `obs_edit_audit` " + 
@@ -557,7 +646,9 @@ people.each_hash do |person|
             "(SELECT program_id FROM program WHERE concept_id = (SELECT concept_id FROM concept_name WHERE name = " + 
             "'HIV PROGRAM' LIMIT 1)))), NULL), obs_datetime, NULL, creator, obs_datetime, NULL, NULL, NULL, NULL, " + 
             "NULL, NULL, (SELECT UUID()) " + 
-            " FROM obs WHERE obs_id = #{ob["obs_id"]}"
+            " FROM obs WHERE obs_id = #{ob["obs_id"]}" 
+      
+          log.debug "Failed patient: #{person["patient_id"]}"      
       
         end
       }
@@ -596,7 +687,10 @@ people.each_hash do |person|
     rescue Mysql::Error => e
       puts "?? Error #{e.errno}: #{e.error}"
       
-      puts ":: Query: "
+      puts ":: Query: " 
+      
+      log.debug "Failed patient: #{person["patient_id"]}"
+      
     end
     
     begin
@@ -624,11 +718,17 @@ people.each_hash do |person|
     rescue Mysql::Error => e
       puts "?? Error #{e.errno}: #{e.error}"
       
-      puts ":: Query: "
+      puts ":: Query: " 
+      
+      log.debug "Failed patient: #{person["patient_id"]}"
+      
     end
     
   }
   t.join
+  
+  p = dest_con.query("COMMIT")  
+
 end
 
 p = dest_con.query("SET @@FOREIGN_KEY_CHECKS=1")
