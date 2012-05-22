@@ -191,6 +191,9 @@ people.each_hash do |person|
       puts "?? Error #{e.errno}: #{e.error}"
       
       puts ":: Query: "
+      
+      log.debug "Failed patient: #{person["patient_id"]}"
+      next
     end
     
     begin
@@ -207,6 +210,7 @@ people.each_hash do |person|
           " ON DUPLICATE KEY UPDATE patient_id = #{person["patient_id"]}")  
       
       log.debug "Failed patient: #{person["patient_id"]}"
+      next
       
     rescue Mysql::Error => e
       puts "?? Error #{e.errno}: #{e.error}"
@@ -237,6 +241,7 @@ people.each_hash do |person|
       puts ":: Query: " 
       
       log.debug "Failed patient: #{person["patient_id"]}"
+      next
       
     end
     
@@ -261,6 +266,7 @@ people.each_hash do |person|
       puts ":: Query: " 
       
       log.debug "Failed patient: #{person["patient_id"]}"
+      next
       
     end
     
@@ -285,6 +291,7 @@ people.each_hash do |person|
       puts ":: Query: " 
       
       log.debug "Failed patient: #{person["patient_id"]}"
+      next
       
     end
     
@@ -312,6 +319,7 @@ people.each_hash do |person|
       puts ":: Query: " 
       
       log.debug "Failed patient: #{person["patient_id"]}"
+      next
       
     end
     
@@ -339,6 +347,7 @@ people.each_hash do |person|
       puts ":: Query: " 
       
       log.debug "Failed patient: #{person["patient_id"]}"
+      next
       
     end
     
@@ -363,6 +372,7 @@ people.each_hash do |person|
       puts ":: Query: " 
       
       log.debug "Failed patient: #{person["patient_id"]}"
+      next
       
     end
     
@@ -413,6 +423,7 @@ people.each_hash do |person|
         "`#{db}`.`orders`.`order_id` LIMIT 1), DATE(`#{db}`.`orders`.`date_created`))),'') != ''" 
       
       log.debug "Failed patient: #{person["patient_id"]}"
+      next
       
     end
     
@@ -446,6 +457,7 @@ people.each_hash do |person|
       puts ":: Query: " 
       
       log.debug "Failed patient: #{person["patient_id"]}"
+      next
       
     end
     
@@ -510,6 +522,7 @@ people.each_hash do |person|
         "FROM `#{db}`.`obs` WHERE `#{db}`.`obs`.`patient_id` = #{person["patient_id"]} " 
       
       log.debug "Failed patient: #{person["patient_id"]}"
+      next
       
     end
 
@@ -564,6 +577,7 @@ people.each_hash do |person|
           "`#{db}`.`encounter_type` WHERE `#{db}`.`encounter_type`.`name` = 'HIV Staging' LIMIT 1) LIMIT 1" 
       
         log.debug "Failed patient: #{person["patient_id"]}"
+        next
       
       end
     end
@@ -615,6 +629,7 @@ people.each_hash do |person|
         "`#{db}`.`orders`.`order_id` LIMIT 1), DATE(`#{db}`.`orders`.`date_created`))),'') != ''" 
       
       log.debug "Failed patient: #{person["patient_id"]}"
+      next
       
     end
     
@@ -652,7 +667,8 @@ people.each_hash do |person|
             "NULL, NULL, (SELECT UUID()) " + 
             " FROM obs WHERE obs_id = #{ob["obs_id"]}" 
       
-          log.debug "Failed patient: #{person["patient_id"]}"      
+          log.debug "Failed patient: #{person["patient_id"]}"
+          next      
       
         end
       }
@@ -694,6 +710,7 @@ people.each_hash do |person|
       puts ":: Query: " 
       
       log.debug "Failed patient: #{person["patient_id"]}"
+      next
       
     end
     
@@ -725,6 +742,7 @@ people.each_hash do |person|
       puts ":: Query: " 
       
       log.debug "Failed patient: #{person["patient_id"]}"
+      next
       
     end
     
