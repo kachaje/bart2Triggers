@@ -153,7 +153,7 @@ end
 # GENERAL
 people = con.query("SELECT patient_id FROM patient ORDER BY date_created DESC LIMIT #{ARGV[1]}, #{ARGV[2]}") 
 
-p = dest_con.query("UNIQUE_CHECKS=0")
+p = dest_con.query("SET UNIQUE_CHECKS=0")
 p = dest_con.query("SET FOREIGN_KEY_CHECKS=0")  
 
 starttime = Time.now
@@ -983,4 +983,4 @@ people.each_hash do |person|
 end
 
 p = dest_con.query("SET FOREIGN_KEY_CHECKS=1")
-p = dest_con.query("UNIQUE_CHECKS=1")
+p = dest_con.query("SET UNIQUE_CHECKS=1")
