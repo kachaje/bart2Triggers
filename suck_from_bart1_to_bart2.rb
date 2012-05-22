@@ -149,7 +149,7 @@ if ARGV[0] == "true" || ARGV[0] == "1"
 end
 
 # GENERAL
-people = con.query("SELECT patient_id FROM patient LIMIT #{ARGV[1]}, #{ARGV[2]}") 
+people = con.query("SELECT patient_id FROM patient ORDER BY date_created DESC LIMIT #{ARGV[1]}, #{ARGV[2]}") 
 
 p = dest_con.query("SET @@FOREIGN_KEY_CHECKS=0")  
 
