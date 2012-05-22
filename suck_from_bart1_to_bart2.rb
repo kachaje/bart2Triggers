@@ -221,6 +221,9 @@ people.each_hash do |person|
           "FROM `#{db}`.`patient` WHERE `#{db}`.`patient`.`patient_id` = #{person["patient_id"]} " + 
           " ON DUPLICATE KEY UPDATE patient_id = #{person["patient_id"]}")  
       
+    rescue Mysql::Error => e
+      puts "?? Error #{e.errno}: #{e.error}"
+      
       log.debug "Error #{e.errno}: #{e.error}.\n Failed patient: #{person["patient_id"]}\nQuery: " + "INSERT INTO patient SELECT `#{db}`.`patient`.`patient_id`, `#{db}`.`patient`.`tribe`, " +
           "(SELECT `users_mapping`.`bart2_user_id` FROM `users_mapping` WHERE `users_mapping`.`bart1_user_id` = " + 
           "`#{db}`.`patient`.`creator`), `#{db}`.`patient`.`date_created`, "  + 
@@ -232,10 +235,6 @@ people.each_hash do |person|
           " ON DUPLICATE KEY UPDATE patient_id = #{person["patient_id"]}"
       next
       
-    rescue Mysql::Error => e
-      puts "?? Error #{e.errno}: #{e.error}"
-      
-      puts ":: Query: "
     end
     
     begin
