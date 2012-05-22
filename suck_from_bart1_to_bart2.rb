@@ -7,13 +7,15 @@ require "logger"
 #   1: true/false ::if this is the first call, true else false
 #   2: first position ::to start from
 #   3: range  ::total patients on this call
+#   4: insert reason for starting art as well (1-yes; 0-no)
 
-if ARGV.length < 3
+if ARGV.length < 4
   print "\nSorry, this script expects 3 arguments in this order \n\n\t./filename.rb arg1 arg2 arg3 [arg4]\n\n" + 
     "where: \n\targ1\t: true/false - meaning this is the first file in a series of calls or not\n\t" + 
     "arg2\t: start patient position\n\t" + 
     "arg3\t: range of patients on this run\n\t" + 
-    "[arg4]\t: optional log file\n\n"
+    "arg4\t: insert reason for starting art as well (1-yes; 0-no)" +
+    "[arg5]\t: optional log file\n\n"
   exit
 end
 
@@ -511,57 +513,59 @@ people.each_hash do |person|
       
     end
 
-    begin
-      print "# insert into obs reason for art eligibity for patient with id #{person["patient_id"]}\n"
+    if ARGV[3] == "1" || ARGV[3] == "true"
+      begin
+        print "# insert into obs reason for art eligibity for patient with id #{person["patient_id"]}\n"
             
-      w = dest_con.query("SELECT `#{db}`.who_stage(#{person["patient_id"]}, DATE(NOW())) stage")
+        w = dest_con.query("SELECT `#{db}`.who_stage(#{person["patient_id"]}, DATE(NOW())) stage")
       
-      row = w.fetch_hash
+        row = w.fetch_hash
       
-      puts "WHO Stage " + row["stage"].to_s
+        puts "WHO Stage " + row["stage"].to_s
       
-      if row["stage"].to_i > 1
-        p = dest_con.query("SELECT `#{db}`.reason_for_art_eligibility(#{person["patient_id"]}) reason")
+        if row["stage"].to_i > 1
+          p = dest_con.query("SELECT `#{db}`.reason_for_art_eligibility(#{person["patient_id"]}) reason")
       
-        row = p.fetch_hash
+          row = p.fetch_hash
       
-        if !row["reason"].nil?
-          puts "Reason " + row["reason"]
+          if !row["reason"].nil?
+            puts "Reason " + row["reason"]
         
-          p = dest_con.query("INSERT INTO obs SELECT NULL, #{person["patient_id"]}, " + 
-              "(SELECT concept_id FROM concept_name WHERE name = 'Reason for ART eligibility' LIMIT 1), " + 
-              " `#{db}`.`encounter`.`encounter_id`, NULL, `#{db}`.`encounter`.`encounter_datetime`, " + 
-              "`#{db}`.`encounter`.`location_id`, NULL, NULL, NULL, NULL, " + 
-              "(SELECT new_concept_id FROM tmp_concepts_stack WHERE old_concept_id = " + 
-              "(#{row["reason"].to_i}) LIMIT 1), " + 
-              "NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, " + 
-              "(SELECT `users_mapping`.`bart2_user_id` FROM `users_mapping` WHERE `users_mapping`.`bart1_user_id` = " + 
-              "`#{db}`.`encounter`.`creator`), `#{db}`.`encounter`.`date_created`, NULL, " + 
-              " NULL, NULL, NULL, NULL, (SELECT UUID()) " + 
-              "FROM `#{db}`.`encounter` WHERE `#{db}`.`encounter`.`patient_id` = #{person["patient_id"]} AND " + 
-              "`#{db}`.`encounter`.`encounter_type` = (SELECT `#{db}`.`encounter_type`.`encounter_type_id` FROM " + 
-              "`#{db}`.`encounter_type` WHERE `#{db}`.`encounter_type`.`name` = 'HIV Staging' LIMIT 1) LIMIT 1")
+            p = dest_con.query("INSERT INTO obs SELECT NULL, #{person["patient_id"]}, " + 
+                "(SELECT concept_id FROM concept_name WHERE name = 'Reason for ART eligibility' LIMIT 1), " + 
+                " `#{db}`.`encounter`.`encounter_id`, NULL, `#{db}`.`encounter`.`encounter_datetime`, " + 
+                "`#{db}`.`encounter`.`location_id`, NULL, NULL, NULL, NULL, " + 
+                "(SELECT new_concept_id FROM tmp_concepts_stack WHERE old_concept_id = " + 
+                "(#{row["reason"].to_i}) LIMIT 1), " + 
+                "NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, " + 
+                "(SELECT `users_mapping`.`bart2_user_id` FROM `users_mapping` WHERE `users_mapping`.`bart1_user_id` = " + 
+                "`#{db}`.`encounter`.`creator`), `#{db}`.`encounter`.`date_created`, NULL, " + 
+                " NULL, NULL, NULL, NULL, (SELECT UUID()) " + 
+                "FROM `#{db}`.`encounter` WHERE `#{db}`.`encounter`.`patient_id` = #{person["patient_id"]} AND " + 
+                "`#{db}`.`encounter`.`encounter_type` = (SELECT `#{db}`.`encounter_type`.`encounter_type_id` FROM " + 
+                "`#{db}`.`encounter_type` WHERE `#{db}`.`encounter_type`.`name` = 'HIV Staging' LIMIT 1) LIMIT 1")
+          end
         end
+      rescue Mysql::Error => e
+        puts "?? Error #{e.errno}: #{e.error}"
+      
+        puts ":: Query: " + "INSERT INTO obs SELECT NULL, #{person["patient_id"]}, " + 
+          "(SELECT concept_id FROM concept_name WHERE name = 'Reason for ART eligibility' LIMIT 1), " + 
+          " `#{db}`.`encounter`.`encounter_id`, NULL, `#{db}`.`encounter`.`encounter_datetime`, " + 
+          "`#{db}`.`encounter`.`location_id`, NULL, NULL, NULL, NULL, " + 
+          "(SELECT new_concept_id FROM tmp_concepts_stack WHERE old_concept_id = " + 
+          "(#{row["reason"].to_i}) LIMIT 1), " + 
+          "NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, " + 
+          "(SELECT `users_mapping`.`bart2_user_id` FROM `users_mapping` WHERE `users_mapping`.`bart1_user_id` = " + 
+          "`#{db}`.`encounter`.`creator`), `#{db}`.`encounter`.`date_created`, NULL, " + 
+          " NULL, NULL, NULL, NULL, (SELECT UUID()) " + 
+          "FROM `#{db}`.`encounter` WHERE `#{db}`.`encounter`.`patient_id` = #{person["patient_id"]} AND " + 
+          "`#{db}`.`encounter`.`encounter_type` = (SELECT `#{db}`.`encounter_type`.`encounter_type_id` FROM " + 
+          "`#{db}`.`encounter_type` WHERE `#{db}`.`encounter_type`.`name` = 'HIV Staging' LIMIT 1) LIMIT 1" 
+      
+        log.debug "Failed patient: #{person["patient_id"]}"
+      
       end
-    rescue Mysql::Error => e
-      puts "?? Error #{e.errno}: #{e.error}"
-      
-      puts ":: Query: " + "INSERT INTO obs SELECT NULL, #{person["patient_id"]}, " + 
-        "(SELECT concept_id FROM concept_name WHERE name = 'Reason for ART eligibility' LIMIT 1), " + 
-        " `#{db}`.`encounter`.`encounter_id`, NULL, `#{db}`.`encounter`.`encounter_datetime`, " + 
-        "`#{db}`.`encounter`.`location_id`, NULL, NULL, NULL, NULL, " + 
-        "(SELECT new_concept_id FROM tmp_concepts_stack WHERE old_concept_id = " + 
-        "(#{row["reason"].to_i}) LIMIT 1), " + 
-        "NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, " + 
-        "(SELECT `users_mapping`.`bart2_user_id` FROM `users_mapping` WHERE `users_mapping`.`bart1_user_id` = " + 
-        "`#{db}`.`encounter`.`creator`), `#{db}`.`encounter`.`date_created`, NULL, " + 
-        " NULL, NULL, NULL, NULL, (SELECT UUID()) " + 
-        "FROM `#{db}`.`encounter` WHERE `#{db}`.`encounter`.`patient_id` = #{person["patient_id"]} AND " + 
-        "`#{db}`.`encounter`.`encounter_type` = (SELECT `#{db}`.`encounter_type`.`encounter_type_id` FROM " + 
-        "`#{db}`.`encounter_type` WHERE `#{db}`.`encounter_type`.`name` = 'HIV Staging' LIMIT 1) LIMIT 1" 
-      
-      log.debug "Failed patient: #{person["patient_id"]}"
-      
     end
     
     begin
