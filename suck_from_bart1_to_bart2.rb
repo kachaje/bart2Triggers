@@ -8,14 +8,16 @@ require "logger"
 #   2: first position ::to start from
 #   3: range  ::total patients on this call
 #   4: insert reason for starting art as well (1-yes; 0-no)
+#   5: back to front (1-yes; 0-no)
 
-if ARGV.length < 4
+if ARGV.length < 5
   print "\nSorry, this script expects 3 arguments in this order \n\n\t./filename.rb arg1 arg2 arg3 [arg4]\n\n" + 
     "where: \n\targ1\t: true/false - meaning this is the first file in a series of calls or not\n\t" + 
     "arg2\t: start patient position\n\t" + 
     "arg3\t: range of patients on this run\n\t" + 
     "arg4\t: insert reason for starting art as well (1-yes; 0-no)" +
-    "[arg5]\t: optional log file\n\n"
+    "arg5\t: insert from last to first record (1-yes; 0-no)\n\n" + 
+    "[arg6]\t: optional log file\n\n"
   exit
 end
 
@@ -151,7 +153,8 @@ if ARGV[0] == "true" || ARGV[0] == "1"
 end
 
 # GENERAL
-people = con.query("SELECT patient_id FROM patient ORDER BY date_created DESC LIMIT #{ARGV[1]}, #{ARGV[2]}") 
+people = con.query("SELECT patient_id FROM patient ORDER BY date_created #{ARGV[4] == "1" ? 
+  "DESC" : "ASC"} LIMIT #{ARGV[1]}, #{ARGV[2]}") 
 
 p = dest_con.query("SET UNIQUE_CHECKS=0")
 p = dest_con.query("SET FOREIGN_KEY_CHECKS=0")  
